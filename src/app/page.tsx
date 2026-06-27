@@ -7,7 +7,6 @@ import { EditorialServiceGrid } from "@/components/editorial/EditorialServiceGri
 import { EditorialApproach } from "@/components/editorial/EditorialApproach";
 import { EditorialReveal } from "@/components/editorial/EditorialReveal";
 import { HairlineReveal } from "@/components/editorial/HairlineReveal";
-import { WorkCover } from "@/components/editorial/WorkCover";
 import { FeatureIllustration } from "@/components/editorial/IllustrationFrame";
 import { Accent, AccentUnderline } from "@/components/editorial/Accent";
 import { Button } from "@/components/ui/Button";
@@ -68,33 +67,6 @@ const SERVICES = [
     spot: ILLUSTRATIONS.spots.svcDrone,
     spotAlt: "Hand-drawn quadcopter drone with camera gimbal",
     spotLabel: "SVC DRONE",
-  },
-];
-
-const WORK = [
-  {
-    title: "Hospitality Brand Launch",
-    category: "Brand · Web · Content",
-    src: ILLUSTRATIONS.work.cover1,
-    alt: "Graded photograph of a hospitality brand launch",
-  },
-  {
-    title: "Restaurant Group Digital",
-    category: "Web · SEO · Social",
-    src: ILLUSTRATIONS.work.cover2,
-    alt: "Graded photograph of restaurant group digital work",
-  },
-  {
-    title: "Commercial Construction",
-    category: "Video · Drone · Print",
-    src: ILLUSTRATIONS.work.cover3,
-    alt: "Graded photograph of commercial construction project",
-  },
-  {
-    title: "Retail Rebrand",
-    category: "Identity · Signage · Campaign",
-    src: ILLUSTRATIONS.work.cover4,
-    alt: "Graded photograph of retail rebrand campaign",
   },
 ];
 
@@ -202,41 +174,14 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Work */}
-        <section id="work" className="scroll-mt-28 bg-paper py-24 md:py-32">
-          <div className="container-content">
-            <div className="mb-14 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-              <EditorialReveal>
-                <Eyebrow index="04" label="Selected Work" tone="light" className="mb-6" />
-                <h2 className="type-h2 max-w-lg">
-                  Work that earns attention through{" "}
-                  <span className="text-navy">craft</span>.
-                </h2>
-              </EditorialReveal>
-              <EditorialReveal delay={0.08}>
-                <Link href="/work" className="editorial-link">
-                  Full portfolio
-                  <Accent kind="arrow" width={32} height={16} />
-                </Link>
-              </EditorialReveal>
-            </div>
-
-            <div className="grid gap-10 md:grid-cols-2">
-              {WORK.map((item, i) => (
-                <EditorialReveal key={item.title} delay={i * 0.08}>
-                  <WorkCover {...item} index={i + 1} />
-                </EditorialReveal>
-              ))}
-            </div>
-          </div>
-        </section>
+        <HairlineReveal className="container-content" />
 
         {/* Approach */}
         <section id="approach" className="scroll-mt-28 py-24 md:py-32">
           <div className="container-content">
             <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
               <EditorialReveal className="lg:sticky lg:top-32 lg:self-start">
-                <Eyebrow index="05" label="Approach" tone="light" className="mb-6" />
+                <Eyebrow index="04" label="Approach" tone="light" className="mb-6" />
                 <h2 className="type-h2 max-w-sm">
                   A process built to make the work{" "}
                   <AccentUnderline>hold up</AccentUnderline>.
@@ -263,7 +208,7 @@ export default function HomePage() {
           <div className="absolute inset-0 flex items-center bg-gradient-to-r from-cream/95 via-cream/70 to-transparent">
             <div className="container-content py-20 md:py-28">
               <EditorialReveal className="max-w-xl">
-                <Eyebrow index="06" label="The Family" tone="light" className="mb-6" />
+                <Eyebrow index="05" label="The Family" tone="light" className="mb-6" />
                 <h2 className="type-h2">
                   Rooted in a holding company that builds for{" "}
                   <span className="text-navy">decades</span>.
