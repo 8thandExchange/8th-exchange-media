@@ -4,7 +4,6 @@ import { CONTACT_EMAIL } from "@/lib/site";
 import { HairlineReveal } from "@/components/editorial/HairlineReveal";
 
 const FOOTER_NAV = [
-  { href: "/work", label: "Work" },
   { href: "/services", label: "Services" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },

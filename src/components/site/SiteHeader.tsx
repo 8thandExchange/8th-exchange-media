@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/work", label: "Work" },
   { href: "/services", label: "Services" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },

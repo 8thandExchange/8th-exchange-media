@@ -68,6 +68,45 @@ interface HeaderLogoProps {
   priority?: boolean;
 }
 
+/** Navy 8E coin — vector only, no canvas grain or background fill */
+function CoinMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 280 280"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="140" cy="140" r="126" stroke="#0B1B3D" strokeWidth="2.6" />
+      <circle cx="140" cy="140" r="116" stroke="#0B1B3D" strokeWidth="1.1" />
+      <text
+        x="111"
+        y="164"
+        textAnchor="middle"
+        fontFamily="var(--font-playfair), 'Playfair Display', Georgia, serif"
+        fontWeight="600"
+        fontSize="70"
+        fill="#0B1B3D"
+      >
+        8
+      </text>
+      <line x1="136" y1="94" x2="144" y2="186" stroke="#0B1B3D" strokeWidth="2.3" />
+      <text
+        x="170"
+        y="164"
+        textAnchor="middle"
+        fontFamily="var(--font-playfair), 'Playfair Display', Georgia, serif"
+        fontWeight="600"
+        fontSize="70"
+        fill="#0B1B3D"
+      >
+        E
+      </text>
+    </svg>
+  );
+}
+
 /** Coin mark + Playfair wordmark — legible on the navy header bar */
 export function HeaderLogo({ priority = false }: HeaderLogoProps) {
   const size = SIZES["coin-cream"];
@@ -99,22 +138,14 @@ export function HeaderLogo({ priority = false }: HeaderLogoProps) {
 }
 
 /** Transparent coin + wordmark for paper/cream backgrounds */
-export function FooterLogo({ priority = false }: HeaderLogoProps) {
+export function FooterLogo() {
   const size = SIZES["coin-transparent"];
   return (
     <Link
       href="/"
       className="inline-flex items-center gap-3 focus-visible:outline-offset-4 md:gap-3.5"
     >
-      <Image
-        src={LOCKUPS["coin-transparent"]}
-        alt=""
-        width={size.w}
-        height={size.h}
-        priority={priority}
-        aria-hidden
-        className={size.className}
-      />
+      <CoinMark className={cn(size.className, "shrink-0")} />
       <span className="flex flex-col leading-none">
         <span className="font-display text-[1.0625rem] font-medium italic tracking-[-0.01em] text-navy md:text-[1.25rem]">
           8th & Exchange

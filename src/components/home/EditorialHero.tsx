@@ -63,8 +63,8 @@ export function EditorialHero() {
             <Button href="/contact" tone="light" pill>
               Start a Project
             </Button>
-            <Button href="/work" tone="light" className="btn-on-light">
-              View Work
+            <Button href="/services" tone="light" className="btn-on-light">
+              Our Services
             </Button>
           </motion.div>
         </motion.div>
