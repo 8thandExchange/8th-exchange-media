@@ -47,6 +47,7 @@ export function mapCustomer(
   return {
     id: customer.id,
     name: customerDisplayName(customer),
+    contactName: customer.metadata?.contact_name?.trim() || null,
     email: customer.email ?? null,
     phone: customer.phone ?? null,
     created: customer.created,

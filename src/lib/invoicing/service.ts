@@ -50,16 +50,20 @@ export async function createCustomer(input: {
   name: string;
   email?: string;
   phone?: string;
+  contactName?: string;
   address?: Stripe.AddressParam;
   metadata?: Record<string, string>;
 }) {
   const stripe = getStripe();
+  const metadata = { ...input.metadata };
+  if (input.contactName) metadata.contact_name = input.contactName;
+
   const customer = await stripe.customers.create({
     name: input.name,
     email: input.email,
     phone: input.phone,
     address: input.address,
-    metadata: input.metadata,
+    metadata: Object.keys(metadata).length ? metadata : undefined,
   });
   return mapCustomer(customer);
 }
@@ -70,12 +74,30 @@ export async function updateCustomer(
     name?: string;
     email?: string;
     phone?: string;
+    contactName?: string;
     address?: Stripe.AddressParam;
     metadata?: Record<string, string>;
   }
 ) {
   const stripe = getStripe();
-  const customer = await stripe.customers.update(id, input);
+  const existing = await stripe.customers.retrieve(id);
+  if (existing.deleted) {
+    throw new Error("Customer not found");
+  }
+
+  const metadata = { ...existing.metadata, ...input.metadata };
+  if (input.contactName !== undefined) {
+    if (input.contactName) metadata.contact_name = input.contactName;
+    else delete metadata.contact_name;
+  }
+
+  const customer = await stripe.customers.update(id, {
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    address: input.address,
+    metadata: Object.keys(metadata).length ? metadata : undefined,
+  });
   return mapCustomer(customer);
 }
 

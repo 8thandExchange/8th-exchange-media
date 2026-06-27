@@ -23,6 +23,7 @@ export interface InvoiceSummary {
 export interface CustomerSummary {
   id: string;
   name: string;
+  contactName: string | null;
   email: string | null;
   phone: string | null;
   created: number;

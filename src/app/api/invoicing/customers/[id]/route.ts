@@ -31,9 +31,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       name?: string;
       email?: string;
       phone?: string;
+      contactName?: string;
       address?: Stripe.AddressParam;
     };
-    const customer = await updateCustomer(id, body);
+
+    if (!body.name?.trim()) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    const customer = await updateCustomer(id, {
+      name: body.name.trim(),
+      email: body.email?.trim() || undefined,
+      phone: body.phone?.trim() || undefined,
+      contactName: body.contactName?.trim() || undefined,
+      address: body.address,
+    });
     return NextResponse.json({ customer });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update customer";

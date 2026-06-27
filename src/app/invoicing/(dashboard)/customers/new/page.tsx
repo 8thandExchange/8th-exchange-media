@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/invoicing/PageHeader";
-import { CreateCustomerForm } from "@/components/invoicing/CreateCustomerForm";
+import { CustomerForm } from "@/components/invoicing/CustomerForm";
 
 export default function NewCustomerPage() {
   return (
@@ -14,7 +14,7 @@ export default function NewCustomerPage() {
           </Link>
         }
       />
-      <CreateCustomerForm />
+      <CustomerForm mode="create" />
     </>
   );
 }

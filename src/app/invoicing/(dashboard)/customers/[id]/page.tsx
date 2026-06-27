@@ -9,6 +9,13 @@ interface CustomerDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+function contactSubtitle(customer: ReturnType<typeof mapCustomer>) {
+  if (customer.email) return customer.email;
+  if (customer.contactName) return customer.contactName;
+  if (customer.phone) return customer.phone;
+  return "No contact email on file";
+}
+
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { id } = await params;
 
@@ -28,28 +35,48 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
     <>
       <PageHeader
         title={customer.name}
-        subtitle={customer.email ?? "No email on file"}
+        subtitle={contactSubtitle(customer)}
         action={
-          <Link
-            href={`/invoicing/invoices/new?customer=${customer.id}`}
-            className="inv-btn inv-btn-primary"
-          >
-            Send invoice
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/invoicing/customers/${customer.id}/edit`} className="inv-btn inv-btn-secondary">
+              Edit customer
+            </Link>
+            <Link
+              href={`/invoicing/invoices/new?customer=${customer.id}`}
+              className="inv-btn inv-btn-primary"
+            >
+              Send invoice
+            </Link>
+          </div>
         }
       />
 
       <div className="inv-detail-grid">
         <div className="inv-card inv-detail-section">
-          <div className="inv-detail-label">Contact</div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="inv-detail-label">Contact</div>
+            <Link href={`/invoicing/customers/${customer.id}/edit`} className="inv-link text-[13px]">
+              Edit
+            </Link>
+          </div>
           <div className="space-y-2 text-[14px]">
-            <div>{customer.email ?? "—"}</div>
-            <div>{customer.phone ?? "—"}</div>
+            <div className="flex justify-between gap-4">
+              <span className="text-[var(--inv-text-secondary)]">Contact name</span>
+              <span>{customer.contactName ?? "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-[var(--inv-text-secondary)]">Email</span>
+              <span>{customer.email ?? "—"}</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-[var(--inv-text-secondary)]">Phone</span>
+              <span>{customer.phone ?? "—"}</span>
+            </div>
           </div>
 
-          {customerRaw.address ? (
-            <div className="mt-6">
-              <div className="inv-detail-label">Address</div>
+          <div className="mt-6">
+            <div className="inv-detail-label">Address</div>
+            {customerRaw.address?.line1 ? (
               <div className="text-[14px] text-[var(--inv-text-secondary)]">
                 {[
                   customerRaw.address.line1,
@@ -63,8 +90,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                     <div key={line}>{line}</div>
                   ))}
               </div>
-            </div>
-          ) : null}
+            ) : (
+              <div className="text-[14px] text-[var(--inv-text-secondary)]">—</div>
+            )}
+          </div>
         </div>
 
         <div className="inv-card inv-detail-section">

@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       name?: string;
       email?: string;
       phone?: string;
+      contactName?: string;
       address?: Stripe.AddressParam;
     };
 
@@ -30,8 +31,9 @@ export async function POST(request: Request) {
 
     const customer = await createCustomer({
       name: body.name.trim(),
-      email: body.email,
-      phone: body.phone,
+      email: body.email?.trim() || undefined,
+      phone: body.phone?.trim() || undefined,
+      contactName: body.contactName?.trim() || undefined,
       address: body.address,
     });
 
