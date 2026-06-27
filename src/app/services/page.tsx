@@ -128,32 +128,28 @@ export default function ServicesPage() {
       />
 
       <section className="py-20 md:py-28">
-        <div className="container-content space-y-20 md:space-y-28">
+        <div className="container-content space-y-20 md:space-y-24">
           {SERVICES.map((service, i) => (
             <EditorialReveal key={service.title} delay={(i % 3) * 0.08}>
-              <article
-                className={`grid items-start gap-10 lg:grid-cols-[100px_1fr] lg:gap-16 ${
-                  i % 2 === 1 ? "lg:grid-cols-[1fr_100px] lg:[&>*:first-child]:order-2" : ""
-                }`}
-              >
+              <article className="grid items-start gap-8 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-10 lg:gap-14">
                 <SpotIllustration
                   src={SPOTS[i]?.spot ?? null}
                   alt={SPOTS[i]?.alt ?? service.title}
                   label={SPOTS[i]?.label ?? "SERVICE"}
-                  size={96}
-                  className="mx-auto lg:mx-0"
+                  size={104}
+                  className="mx-auto sm:mx-0"
                 />
-                <div>
+                <div className="min-w-0 text-center sm:text-left">
                   <p className="eyebrow eyebrow-on-light mb-3">
                     {String(i + 1).padStart(2, "0")}
                   </p>
-                  <h2 className="type-h2">{service.title}</h2>
+                  <h2 className="type-h3 text-navy">{service.title}</h2>
                   <p className="type-body mt-4 text-ink/70">{service.description}</p>
-                  <ul className="mt-6 flex flex-wrap gap-2">
+                  <ul className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
                     {service.deliverables.map((d) => (
                       <li
                         key={d}
-                        className="border border-navy/12 px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-ink/55"
+                        className="border border-navy/12 px-3 py-1.5 text-xs font-medium text-ink/60"
                       >
                         {d}
                       </li>
@@ -161,7 +157,7 @@ export default function ServicesPage() {
                   </ul>
                 </div>
               </article>
-              {i < SERVICES.length - 1 ? <HairlineReveal className="mt-20 md:mt-28" /> : null}
+              {i < SERVICES.length - 1 ? <HairlineReveal className="mt-20 md:mt-24" /> : null}
             </EditorialReveal>
           ))}
         </div>

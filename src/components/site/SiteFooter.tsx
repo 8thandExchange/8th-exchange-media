@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { LogoLink } from "@/components/brand/Logo";
-import { Logo } from "@/components/brand/Logo";
+import { FooterLogo } from "@/components/brand/Logo";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { HairlineReveal } from "@/components/editorial/HairlineReveal";
 
@@ -17,13 +16,19 @@ const FAMILY = [
   { href: "#", label: "Exchange House Hospitality" },
 ];
 
+const LEGAL = [
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
+  { href: "/invoicing/login", label: "Staff Login" },
+];
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-navy/10 bg-paper py-16 md:py-20">
       <div className="container-content">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr_1fr_0.8fr]">
           <div>
-            <LogoLink variant="horizontal" />
+            <FooterLogo />
             <p className="type-body mt-6 max-w-sm text-ink/70">
               Full-service media for brands that value craft, clarity, and steady performance. A
               division of{" "}
@@ -70,22 +75,29 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="flex flex-col items-start gap-6">
-            <div>
-              <p className="eyebrow eyebrow-on-light mb-3">Connect</p>
-              <a href={`mailto:${CONTACT_EMAIL}`} className="font-display text-lg italic text-navy">
-                {CONTACT_EMAIL}
-              </a>
-              <p className="mt-3 text-sm text-ink/55">Augusta, Georgia</p>
-            </div>
-            <Logo variant="coin" className="h-16 w-16 opacity-90" />
+          <div>
+            <p className="eyebrow eyebrow-on-light mb-3">Connect</p>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="font-display text-lg italic text-navy">
+              {CONTACT_EMAIL}
+            </a>
+            <p className="mt-3 text-sm text-ink/55">Augusta, Georgia</p>
           </div>
         </div>
 
         <HairlineReveal className="my-10" />
-        <p className="text-xs text-ink/45">
-          © {new Date().getFullYear()} 8th & Exchange Media, LLC. All rights reserved.
-        </p>
+
+        <div className="flex flex-col gap-4 text-xs text-ink/45 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} 8th & Exchange Media, LLC. All rights reserved.</p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2">
+            {LEGAL.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="transition-colors hover:text-navy">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </footer>
   );
