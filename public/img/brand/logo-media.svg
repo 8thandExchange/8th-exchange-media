@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" fill="none" aria-hidden="true">
+  <g transform="translate(8, 8)">
+    <ellipse cx="28" cy="18" rx="18" ry="20" stroke="#c9a84c" stroke-width="3" fill="none"/>
+    <ellipse cx="28" cy="52" rx="22" ry="24" stroke="#c9a84c" stroke-width="3" fill="none"/>
+    <line x1="42" y1="0" x2="42" y2="72" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="42" y1="0" x2="68" y2="0" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="42" y1="36" x2="60" y2="36" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="42" y1="72" x2="68" y2="72" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="96" y="52" font-family="'Cormorant Garamond', Georgia, serif" font-weight="600" font-size="28" letter-spacing="6" fill="#f5f0e1">8TH &amp; EXCHANGE</text>
+  <text x="96" y="88" font-family="'DM Sans', system-ui, sans-serif" font-weight="400" font-size="14" letter-spacing="10" fill="#c9a84c">MEDIA</text>
+</svg>
