@@ -829,3 +829,292 @@
     flex: 1;
   }
 }
+
+/* ============================================================
+   Invoice preview modal + rendered document
+   ============================================================ */
+
+.inv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(11, 27, 61, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.inv-modal {
+  width: 100%;
+  max-width: 640px;
+  background: var(--inv-surface);
+  border-radius: var(--inv-radius);
+  box-shadow: 0 24px 64px rgba(11, 27, 61, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.inv-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--inv-border);
+}
+
+.inv-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.inv-modal-sub {
+  font-size: 13px;
+  color: var(--inv-text-secondary);
+  margin-top: 2px;
+}
+
+.inv-modal-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.inv-modal-body {
+  padding: 22px;
+  background: #f4f2ec;
+  max-height: 64vh;
+  overflow-y: auto;
+}
+
+.inv-modal-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--inv-border);
+  background: var(--inv-surface);
+}
+
+.inv-modal-foot-note {
+  font-size: 12px;
+  color: var(--inv-text-muted);
+  max-width: 240px;
+}
+
+/* The rendered invoice document — brand navy + gold, mirrors what the
+   customer sees on the Stripe hosted invoice and pay page. */
+.inv-preview-doc {
+  background: #fffdf8;
+  border: 1px solid #e7e2d6;
+  border-radius: 6px;
+  padding: 32px 34px;
+  color: #1a1a18;
+  box-shadow: 0 1px 2px rgba(11, 27, 61, 0.06);
+}
+
+.inv-preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #0b1b3d;
+}
+
+.inv-preview-brand {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0b1b3d;
+}
+
+.inv-preview-brand-meta {
+  font-size: 12px;
+  color: #6b6b66;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.inv-preview-head-right {
+  text-align: right;
+}
+
+.inv-preview-doctype {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #c5a059;
+}
+
+.inv-preview-number {
+  font-size: 12px;
+  color: #9b9b95;
+  margin-top: 4px;
+}
+
+.inv-preview-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  padding: 20px 0;
+}
+
+.inv-preview-meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9b9b95;
+  margin-bottom: 4px;
+}
+
+.inv-preview-meta-strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0b1b3d;
+}
+
+.inv-preview-meta-line {
+  font-size: 13px;
+  color: #6b6b66;
+  margin-top: 2px;
+}
+
+.inv-preview-meta-right {
+  min-width: 180px;
+}
+
+.inv-preview-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.inv-preview-meta-row .inv-preview-meta-label {
+  margin-bottom: 0;
+}
+
+.inv-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.inv-preview-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9b9b95;
+  padding: 8px 0;
+  border-bottom: 1px solid #e7e2d6;
+}
+
+.inv-preview-table td {
+  font-size: 13px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0ece2;
+  vertical-align: top;
+}
+
+.inv-preview-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: 16px;
+}
+
+.inv-preview-empty {
+  color: #b9b4a6;
+  font-style: italic;
+}
+
+.inv-preview-totals {
+  margin-top: 16px;
+  margin-left: auto;
+  width: 260px;
+}
+
+.inv-preview-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6b6b66;
+  padding: 5px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-preview-total-grand {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 2px solid #0b1b3d;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0b1b3d;
+}
+
+.inv-preview-note {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0ece2;
+}
+
+.inv-preview-note p {
+  font-size: 13px;
+  color: #4a4a46;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.inv-preview-foot {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #f0ece2;
+}
+
+.inv-preview-foot p {
+  font-size: 13px;
+  color: #6b6b66;
+  line-height: 1.6;
+}
+
+.inv-preview-foot-pay {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9b9b95;
+}
+
+@media (max-width: 640px) {
+  .inv-preview-doc {
+    padding: 22px 20px;
+  }
+
+  .inv-preview-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inv-preview-totals {
+    width: 100%;
+  }
+
+  .inv-modal-foot .inv-action-row {
+    width: 100%;
+  }
+
+  .inv-modal-foot .inv-btn {
+    flex: 1;
+  }
+}

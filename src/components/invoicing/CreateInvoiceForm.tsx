@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CustomerSummary, ProductOption } from "@/lib/invoicing/types";
+import { InvoicePreview } from "./InvoicePreview";
 
 interface LineItemState {
   id: string;
@@ -75,6 +76,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
   const [lineItems, setLineItems] = useState<LineItemState[]>([emptyLineItem()]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"send" | "draft" | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const allPrices = useMemo(
     () =>
@@ -100,6 +102,34 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
     return addDays(new Date(), Number(terms));
   }, [terms, customDate]);
 
+  const previewData = useMemo(
+    () => ({
+      customerName: selectedCustomer?.name ?? "No customer selected",
+      customerEmail: selectedCustomer?.email ?? null,
+      lineItems: lineItems.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitAmount: item.unitAmount,
+      })),
+      subtotal,
+      total: subtotal,
+      dueDate,
+      dueOnReceipt: terms === "0",
+      memo,
+      footer,
+    }),
+    [selectedCustomer, lineItems, subtotal, dueDate, terms, memo, footer]
+  );
+
+  useEffect(() => {
+    if (!showPreview) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setShowPreview(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPreview]);
+
   function updateLineItem(id: string, updates: Partial<LineItemState>) {
     setLineItems((items) =>
       items.map((item) => (item.id === id ? { ...item, ...updates } : item))
@@ -121,12 +151,14 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
     setError(null);
 
     if (mode === "send" && !customerHasEmail) {
+      setShowPreview(false);
       setError(
         "This customer has no email on file, so the invoice can't be emailed. Add an email on the customer record, or save it as a draft."
       );
       return;
     }
     if (subtotal <= 0) {
+      setShowPreview(false);
       setError("Add at least one line item with an amount greater than $0.");
       return;
     }
@@ -148,6 +180,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
 
     if (terms === "custom") {
       if (!dueDate) {
+        setShowPreview(false);
         setError("Pick a valid due date.");
         setLoading(null);
         return;
@@ -170,6 +203,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
       router.push(`/invoicing/invoices/${data.id}`);
       router.refresh();
     } catch (submitError) {
+      setShowPreview(false);
       setError(submitError instanceof Error ? submitError.message : "Something went wrong");
       setLoading(null);
     }
@@ -425,14 +459,90 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
           <button
             type="button"
             className="inv-btn inv-btn-primary"
-            disabled={loading !== null || !customerId || !customerHasEmail}
-            title={!customerHasEmail ? "Add a customer email to send" : undefined}
-            onClick={() => submit("send")}
+            disabled={loading !== null || !customerId || subtotal <= 0}
+            onClick={() => {
+              setError(null);
+              setShowPreview(true);
+            }}
           >
-            {loading === "send" ? "Sending…" : "Create & send invoice"}
+            Preview &amp; send
           </button>
         </div>
       </div>
+
+      {showPreview ? (
+        <div
+          className="inv-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Invoice preview"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setShowPreview(false);
+          }}
+        >
+          <div className="inv-modal">
+            <div className="inv-modal-head">
+              <div>
+                <div className="inv-modal-title">Preview</div>
+                <div className="inv-modal-sub">
+                  This is what {selectedCustomer?.name ?? "the customer"} will receive.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="inv-btn inv-btn-ghost inv-modal-close"
+                aria-label="Close preview"
+                onClick={() => setShowPreview(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="inv-modal-body">
+              <InvoicePreview data={previewData} />
+            </div>
+
+            <div className="inv-modal-foot">
+              {!customerHasEmail ? (
+                <span className="inv-modal-foot-note">
+                  No customer email — you can save a draft, but it can’t be emailed.
+                </span>
+              ) : (
+                <span className="inv-modal-foot-note">
+                  Sends via Stripe with a secure card / ACH payment link.
+                </span>
+              )}
+              <div className="inv-action-row">
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-secondary"
+                  disabled={loading !== null}
+                  onClick={() => setShowPreview(false)}
+                >
+                  Back to edit
+                </button>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-secondary"
+                  disabled={loading !== null || !customerId}
+                  onClick={() => submit("draft")}
+                >
+                  {loading === "draft" ? "Saving…" : "Save as draft"}
+                </button>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-primary"
+                  disabled={loading !== null || !customerId || !customerHasEmail}
+                  title={!customerHasEmail ? "Add a customer email to send" : undefined}
+                  onClick={() => submit("send")}
+                >
+                  {loading === "send" ? "Sending…" : "Send invoice"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
