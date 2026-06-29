@@ -135,7 +135,9 @@ export async function listPrices() {
 export async function createInvoice(input: {
   customerId: string;
   lineItems: LineItemInput[];
+  /** Absolute due date (unix seconds). Use for a specific calendar date. */
   dueDate?: number;
+  /** Net terms in days. 0 = due on receipt. Ignored when dueDate is set. */
   daysUntilDue?: number;
   memo?: string;
   footer?: string;
@@ -143,6 +145,20 @@ export async function createInvoice(input: {
   collectionMethod?: "charge_automatically" | "send_invoice";
 }) {
   const stripe = getStripe();
+  const collectionMethod = input.collectionMethod ?? "send_invoice";
+
+  // Guard: emailing an invoice requires a customer email. Catch this up front
+  // with a clear message instead of letting Stripe fail after the invoice has
+  // already been finalized (which would leave an unsendable open invoice).
+  if (input.autoSend && collectionMethod === "send_invoice") {
+    const customer = await stripe.customers.retrieve(input.customerId);
+    const email = "deleted" in customer && customer.deleted ? null : customer.email;
+    if (!email) {
+      throw new Error(
+        "This customer has no email on file. Add an email to the customer, or save the invoice as a draft."
+      );
+    }
+  }
 
   for (const item of input.lineItems) {
     if (item.priceId) {
@@ -162,21 +178,37 @@ export async function createInvoice(input: {
     }
   }
 
-  const invoice = await stripe.invoices.create({
+  const params: Stripe.InvoiceCreateParams = {
     customer: input.customerId,
-    collection_method: input.collectionMethod ?? "send_invoice",
-    days_until_due: input.daysUntilDue ?? 30,
-    due_date: input.dueDate,
+    collection_method: collectionMethod,
     description: input.memo,
     footer: input.footer,
     auto_advance: false,
     payment_settings: {
       payment_method_types: ["card", "us_bank_account"],
     },
-  });
+  };
+
+  // Stripe rejects sending both due_date and days_until_due. Pick exactly one,
+  // and only for send_invoice (charge_automatically has no payment terms).
+  if (collectionMethod === "send_invoice") {
+    if (input.dueDate) {
+      params.due_date = input.dueDate;
+    } else {
+      params.days_until_due = input.daysUntilDue ?? 30;
+    }
+  }
+
+  const invoice = await stripe.invoices.create(params);
+  if (!invoice.id) {
+    throw new Error("Stripe did not return an invoice id");
+  }
 
   if (input.autoSend) {
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+    if (!finalized.id) {
+      throw new Error("Stripe did not return a finalized invoice id");
+    }
     await stripe.invoices.sendInvoice(finalized.id);
   }
 

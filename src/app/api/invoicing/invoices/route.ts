@@ -20,10 +20,12 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       customerId?: string;
       lineItems?: LineItemInput[];
+      dueDate?: number;
       daysUntilDue?: number;
       memo?: string;
       footer?: string;
       autoSend?: boolean;
+      collectionMethod?: "charge_automatically" | "send_invoice";
     };
 
     if (!body.customerId || !body.lineItems?.length) {
@@ -33,10 +35,12 @@ export async function POST(request: Request) {
     const invoice = await createInvoice({
       customerId: body.customerId,
       lineItems: body.lineItems,
+      dueDate: body.dueDate,
       daysUntilDue: body.daysUntilDue,
       memo: body.memo,
       footer: body.footer,
       autoSend: body.autoSend,
+      collectionMethod: body.collectionMethod,
     });
 
     return NextResponse.json(invoice);
