@@ -72,6 +72,14 @@ npx vercel deploy --prod
 
 Production: https://8emedia.com
 
+### If pushes are not auto-deploying
+
+1. Open [Vercel → 8th-exchange-media → Settings → Git](https://vercel.com/dashboard) and confirm the repo is `8thandExchange/8th-exchange-media` with production branch **`master`**.
+2. **Deployments → Redeploy** the latest `master` commit, or run `npx vercel deploy --prod` locally after `vercel login`.
+3. Optional CI deploy: add GitHub repo secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` (from Vercel project settings). Pushes to `master` then deploy via `.github/workflows/vercel-production.yml`.
+
+After deploy, hard-refresh `/invoicing/invoices/new` and confirm **Due on receipt** appears in payment terms.
+
 Legacy URL `media.8thandexchange.com` redirects to `8emedia.com`.
 
 ### DNS
