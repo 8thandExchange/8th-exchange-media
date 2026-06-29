@@ -168,11 +168,13 @@ export async function createInvoice(input: {
         quantity: item.quantity,
         description: item.description || undefined,
       });
-    } else if (item.unitAmount != null) {
+    } else if (item.unitAmountDecimal != null || item.unitAmount != null) {
+      const unitAmountDecimal = item.unitAmountDecimal ?? String(item.unitAmount);
       await stripe.invoiceItems.create({
         customer: input.customerId,
         description: item.description,
-        amount: item.unitAmount * item.quantity,
+        quantity: item.quantity,
+        unit_amount_decimal: unitAmountDecimal as unknown as Stripe.Decimal,
         currency: item.currency ?? "usd",
       });
     }

@@ -10,7 +10,8 @@ interface LineItemState {
   priceId: string;
   description: string;
   quantity: number;
-  unitAmount: number; // cents
+  /** Per-unit price in dollars, e.g. "0.60" or "0.68055". */
+  unitRate: string;
 }
 
 interface CreateInvoiceFormProps {
@@ -34,8 +35,28 @@ function emptyLineItem(): LineItemState {
     priceId: "",
     description: "",
     quantity: 1,
-    unitAmount: 0,
+    unitRate: "0.00",
   };
+}
+
+function parseUnitRateDollars(input: string): number {
+  const value = Number(input);
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+/** Stripe unit_amount_decimal expects cents as a decimal string. */
+function unitRateToCentsDecimal(rateDollars: number): string {
+  const cents = rateDollars * 100;
+  if (!Number.isFinite(cents) || cents < 0) return "0";
+  return cents.toFixed(12).replace(/\.?0+$/, "");
+}
+
+function unitCentsFromRate(unitRate: string): number {
+  return Number(unitRateToCentsDecimal(parseUnitRateDollars(unitRate)));
+}
+
+function lineTotalCents(item: Pick<LineItemState, "quantity" | "unitRate">): number {
+  return unitCentsFromRate(item.unitRate) * item.quantity;
 }
 
 function money(cents: number): string {
@@ -90,7 +111,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
   const customerHasEmail = Boolean(selectedCustomer?.email);
 
   const subtotal = useMemo(
-    () => lineItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0),
+    () => lineItems.reduce((sum, item) => sum + lineTotalCents(item), 0),
     [lineItems]
   );
 
@@ -109,7 +130,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
       lineItems: lineItems.map((item) => ({
         description: item.description,
         quantity: item.quantity,
-        unitAmount: item.unitAmount,
+        unitAmount: unitCentsFromRate(item.unitRate),
       })),
       subtotal,
       total: subtotal,
@@ -143,7 +164,7 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
       description: price
         ? `${price.productName}${price.nickname ? ` — ${price.nickname}` : ""}`
         : "",
-      unitAmount: price?.unitAmount ?? 0,
+      unitRate: ((price?.unitAmount ?? 0) / 100).toFixed(2),
     });
   }
 
@@ -174,7 +195,9 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
         priceId: item.priceId || undefined,
         description: item.description,
         quantity: item.quantity,
-        unitAmount: item.priceId ? undefined : item.unitAmount,
+        unitAmountDecimal: item.priceId
+          ? undefined
+          : unitRateToCentsDecimal(parseUnitRateDollars(item.unitRate)),
       })),
     };
 
@@ -303,7 +326,8 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
               <span aria-hidden />
             </div>
             {lineItems.map((item) => {
-              const lineTotal = item.unitAmount * item.quantity;
+              const unitCents = unitCentsFromRate(item.unitRate);
+              const lineTotal = lineTotalCents(item);
               return (
                 <div key={item.id} className="inv-line-item">
                   <div className="inv-field">
@@ -334,11 +358,16 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
                   </div>
 
                   <div className="inv-field">
-                    <label className="inv-label inv-line-mlabel">Qty</label>
+                    <label className="inv-label inv-line-mlabel" htmlFor={`qty-${item.id}`}>
+                      Qty
+                    </label>
                     <input
+                      id={`qty-${item.id}`}
                       type="number"
                       min={1}
-                      className="inv-input"
+                      step={1}
+                      inputMode="numeric"
+                      className="inv-input inv-input-qty"
                       value={item.quantity}
                       onChange={(event) =>
                         updateLineItem(item.id, {
@@ -349,23 +378,32 @@ export function CreateInvoiceForm({ customers, products }: CreateInvoiceFormProp
                   </div>
 
                   <div className="inv-field">
-                    <label className="inv-label inv-line-mlabel">Rate (USD)</label>
+                    <label className="inv-label inv-line-mlabel" htmlFor={`rate-${item.id}`}>
+                      Rate (USD)
+                    </label>
                     <input
+                      id={`rate-${item.id}`}
                       type="number"
                       min={0}
-                      step="0.01"
+                      step="0.0001"
+                      inputMode="decimal"
                       className="inv-input"
                       disabled={Boolean(item.priceId)}
-                      value={(item.unitAmount / 100).toFixed(2)}
+                      value={item.unitRate}
                       onChange={(event) =>
-                        updateLineItem(item.id, {
-                          unitAmount: Math.round((Number(event.target.value) || 0) * 100),
-                        })
+                        updateLineItem(item.id, { unitRate: event.target.value })
                       }
                     />
                   </div>
 
-                  <div className="inv-line-amount">{money(lineTotal)}</div>
+                  <div className="inv-line-amount">
+                    <span className="inv-line-amount-value">{money(lineTotal)}</span>
+                    {item.quantity > 1 ? (
+                      <span className="inv-line-calc">
+                        {item.quantity.toLocaleString()} × {money(unitCents)}
+                      </span>
+                    ) : null}
+                  </div>
 
                   <button
                     type="button"

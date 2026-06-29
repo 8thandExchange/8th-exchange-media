@@ -54,7 +54,10 @@ export interface LineItemInput {
   priceId?: string;
   description: string;
   quantity: number;
+  /** Unit price in cents (integer). Prefer unitAmountDecimal for fractional cent rates. */
   unitAmount?: number;
+  /** Unit price in cents as a decimal string, e.g. "60" or "68.055" for Stripe. */
+  unitAmountDecimal?: string;
   currency?: string;
 }
 

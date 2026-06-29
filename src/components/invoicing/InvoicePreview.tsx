@@ -28,6 +28,15 @@ function money(cents: number): string {
   }).format(cents / 100);
 }
 
+function unitMoney(cents: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 5,
+  }).format(cents / 100);
+}
+
 function longDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -105,8 +114,8 @@ export function InvoicePreview({ data }: { data: InvoicePreviewData }) {
           {data.lineItems.map((line, i) => (
             <tr key={i}>
               <td>{line.description || <span className="inv-preview-empty">No description</span>}</td>
-              <td className="inv-preview-num">{line.quantity}</td>
-              <td className="inv-preview-num">{money(line.unitAmount)}</td>
+              <td className="inv-preview-num">{line.quantity.toLocaleString()}</td>
+              <td className="inv-preview-num">{unitMoney(line.unitAmount)}</td>
               <td className="inv-preview-num">{money(line.unitAmount * line.quantity)}</td>
             </tr>
           ))}
