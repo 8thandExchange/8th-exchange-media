@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,8 +18,17 @@ export function InvoicingSidebar() {
   return (
     <aside className="inv-sidebar">
       <div className="inv-sidebar-brand">
-        <div className="inv-sidebar-brand-title">8th & Exchange Media</div>
-        <div className="inv-sidebar-brand-sub">Invoicing</div>
+        <Image
+          src="/brand/assets/logo/coin-clean-small-use.svg"
+          alt=""
+          width={36}
+          height={36}
+          className="inv-sidebar-brand-mark"
+        />
+        <div>
+          <div className="inv-sidebar-brand-title">8th & Exchange Media</div>
+          <div className="inv-sidebar-brand-sub">Invoicing</div>
+        </div>
       </div>
       <nav className="inv-nav">
         <div className="inv-nav-section">Workflows</div>

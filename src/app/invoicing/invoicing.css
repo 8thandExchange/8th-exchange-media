@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Mercury-inspired invoicing design system */
+/* 8E Media invoicing — admin shell on brand navy + gold */
 .inv-shell {
   --inv-bg: #f7f7f5;
   --inv-surface: #ffffff;
@@ -9,8 +9,10 @@
   --inv-text: #1a1a18;
   --inv-text-secondary: #6b6b66;
   --inv-text-muted: #9b9b95;
-  --inv-accent: #5266eb;
-  --inv-accent-hover: #4355d4;
+  --inv-accent: #0b1b3d;
+  --inv-accent-hover: #091630;
+  --inv-gold: #c5a059;
+  --inv-gold-dark: #9c7a38;
   --inv-sidebar: #fafaf8;
   --inv-success: #0f7b4a;
   --inv-success-bg: #e8f5ee;
@@ -47,18 +49,30 @@
 .inv-sidebar-brand {
   padding: 20px 20px 16px;
   border-bottom: 1px solid var(--inv-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inv-sidebar-brand-mark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
 }
 
 .inv-sidebar-brand-title {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: var(--inv-text);
+  color: var(--inv-accent);
 }
 
 .inv-sidebar-brand-sub {
-  font-size: 12px;
-  color: var(--inv-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inv-gold-dark);
   margin-top: 2px;
 }
 
@@ -270,7 +284,7 @@
 
 .inv-search input:focus {
   border-color: var(--inv-accent);
-  box-shadow: 0 0 0 3px rgba(82, 102, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(11, 27, 61, 0.12);
 }
 
 .inv-search-icon {
@@ -364,7 +378,7 @@
 }
 
 .inv-badge-open {
-  background: #eef0fd;
+  background: #eef1f6;
   color: var(--inv-accent);
 }
 
@@ -430,7 +444,7 @@
 .inv-select:focus,
 .inv-textarea:focus {
   border-color: var(--inv-accent);
-  box-shadow: 0 0 0 3px rgba(82, 102, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(11, 27, 61, 0.12);
 }
 
 .inv-textarea {
@@ -777,7 +791,11 @@
   border-top: 1px solid var(--inv-border);
   font-size: 16px;
   font-weight: 600;
-  color: var(--inv-text);
+  color: var(--inv-accent);
+}
+
+.inv-totals-grand span:last-child {
+  color: var(--inv-gold-dark);
 }
 
 /* Sticky action bar with running summary */
@@ -807,6 +825,7 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  color: var(--inv-gold-dark);
 }
 
 .inv-submit-meta {
