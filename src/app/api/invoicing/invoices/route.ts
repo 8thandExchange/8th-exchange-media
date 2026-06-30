@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
 import { createInvoice, listInvoices } from "@/lib/invoicing/service";
+import { formatStripeError } from "@/lib/invoicing/stripe-errors";
 import type { LineItemInput } from "@/lib/invoicing/types";
 
 export async function GET() {
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(invoice);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to create invoice";
+    const message = formatStripeError(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

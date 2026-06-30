@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
+import { formatStripeError } from "@/lib/invoicing/stripe-errors";
 import { sendInvoice } from "@/lib/invoicing/service";
 
 interface RouteContext {

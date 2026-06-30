@@ -160,35 +160,15 @@ export async function createInvoice(input: {
     }
   }
 
-  for (const item of input.lineItems) {
-    if (item.priceId) {
-      await stripe.invoiceItems.create({
-        customer: input.customerId,
-        pricing: { price: item.priceId },
-        quantity: item.quantity,
-        description: item.description || undefined,
-      });
-    } else if (item.unitAmountDecimal != null || item.unitAmount != null) {
-      const unitAmountDecimal = item.unitAmountDecimal ?? String(item.unitAmount);
-      await stripe.invoiceItems.create({
-        customer: input.customerId,
-        description: item.description,
-        quantity: item.quantity,
-        unit_amount_decimal: unitAmountDecimal as unknown as Stripe.Decimal,
-        currency: item.currency ?? "usd",
-      });
-    }
-  }
-
   const params: Stripe.InvoiceCreateParams = {
     customer: input.customerId,
     collection_method: collectionMethod,
     description: input.memo,
     footer: input.footer,
     auto_advance: false,
-    payment_settings: {
-      payment_method_types: ["card", "us_bank_account"],
-    },
+    // Use Stripe Dashboard invoice payment method defaults instead of forcing
+    // types here — hard-coding us_bank_account breaks finalize when ACH isn't
+    // enabled on the account yet.
   };
 
   // Stripe rejects sending both due_date and days_until_due. Pick exactly one,
@@ -206,12 +186,41 @@ export async function createInvoice(input: {
     throw new Error("Stripe did not return an invoice id");
   }
 
-  if (input.autoSend) {
-    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
-    if (!finalized.id) {
-      throw new Error("Stripe did not return a finalized invoice id");
+  try {
+    for (const item of input.lineItems) {
+      if (item.priceId) {
+        await stripe.invoiceItems.create({
+          customer: input.customerId,
+          invoice: invoice.id,
+          pricing: { price: item.priceId },
+          quantity: item.quantity,
+          description: item.description || undefined,
+        });
+      } else if (item.unitAmountDecimal != null || item.unitAmount != null) {
+        const unitAmountDecimal = item.unitAmountDecimal ?? String(item.unitAmount);
+        await stripe.invoiceItems.create({
+          customer: input.customerId,
+          invoice: invoice.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_amount_decimal: unitAmountDecimal as unknown as Stripe.Decimal,
+          currency: item.currency ?? "usd",
+        });
+      }
     }
-    await stripe.invoices.sendInvoice(finalized.id);
+
+    if (input.autoSend) {
+      const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+      if (!finalized.id) {
+        throw new Error("Stripe did not return a finalized invoice id");
+      }
+      await stripe.invoices.sendInvoice(finalized.id);
+    }
+  } catch (error) {
+    if (invoice.status === "draft") {
+      await stripe.invoices.del(invoice.id).catch(() => undefined);
+    }
+    throw error;
   }
 
   return mapInvoice(
