@@ -5,6 +5,7 @@ import { HairlineReveal } from "@/components/editorial/HairlineReveal";
 
 const FOOTER_NAV = [
   { href: "/services", label: "Services" },
+  { href: "/print", label: "Print & Signage" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },
 ];
