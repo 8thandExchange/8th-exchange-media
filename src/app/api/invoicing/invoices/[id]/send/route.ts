@@ -14,7 +14,7 @@ export async function POST(_request: Request, context: RouteContext) {
     await sendInvoice(id);
     return NextResponse.json({ message: "Invoice sent" });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to send invoice";
+    const message = formatStripeError(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
