@@ -1,6 +1,7 @@
 import { getStripe } from "@/lib/stripe";
 import type { LineItemInput } from "./types";
 import { mapCustomer, mapInvoice, mapPaymentLink, mapProduct, mapPrice } from "./stripe-mappers";
+import { getInvoicePaymentSettings } from "./payment-settings";
 import type Stripe from "stripe";
 
 export async function listInvoices(limit = 100): Promise<ReturnType<typeof mapInvoice>[]> {
@@ -160,15 +161,15 @@ export async function createInvoice(input: {
     }
   }
 
+  const paymentSettings = getInvoicePaymentSettings();
+
   const params: Stripe.InvoiceCreateParams = {
     customer: input.customerId,
     collection_method: collectionMethod,
     description: input.memo,
     footer: input.footer,
     auto_advance: false,
-    // Use Stripe Dashboard invoice payment method defaults instead of forcing
-    // types here — hard-coding us_bank_account breaks finalize when ACH isn't
-    // enabled on the account yet.
+    ...(paymentSettings ? { payment_settings: paymentSettings } : {}),
   };
 
   // Stripe rejects sending both due_date and days_until_due. Pick exactly one,
