@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHero } from "@/components/site/PageHero";
-import { ContactForm } from "@/components/forms/ContactForm";
+import { ContactFormFromParams } from "@/components/forms/ContactFormFromParams";
 import { EditorialReveal } from "@/components/editorial/EditorialReveal";
 import { SpotIllustration } from "@/components/editorial/IllustrationFrame";
 import { Accent } from "@/components/editorial/Accent";
@@ -74,12 +75,14 @@ export default function ContactPage() {
             </EditorialReveal>
 
             <EditorialReveal delay={0.12}>
-              <ContactForm
-                tone="light"
-                showPhone
-                showServiceSelect
-                submitLabel="Send inquiry"
-              />
+              <Suspense fallback={<div className="min-h-[360px] border border-hairline-ink bg-paper" />}>
+                <ContactFormFromParams
+                  tone="light"
+                  showPhone
+                  showServiceSelect
+                  submitLabel="Send inquiry"
+                />
+              </Suspense>
             </EditorialReveal>
           </div>
         </div>

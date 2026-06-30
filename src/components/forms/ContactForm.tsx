@@ -20,6 +20,7 @@ const SERVICE_OPTIONS = [
   "Video & Production",
   "Drone & Aerial",
   "Print & Signage",
+  "Print & Signage Quote",
   "360 Virtual Tours",
   "Full-Service Partnership",
 ];
@@ -29,6 +30,7 @@ interface ContactFormProps {
   showServiceSelect?: boolean;
   submitLabel?: string;
   tone?: "dark" | "light";
+  initialService?: string;
 }
 
 export function ContactForm({
@@ -36,9 +38,12 @@ export function ContactForm({
   showServiceSelect = false,
   submitLabel = "Send Inquiry",
   tone = "dark",
+  initialService = "",
 }: ContactFormProps) {
+  const validService = SERVICE_OPTIONS.includes(initialService) ? initialService : "";
+
   const [selected, setSelected] = useState<string[]>([]);
-  const [service, setService] = useState("");
+  const [service, setService] = useState(validService);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const dark = tone === "dark";

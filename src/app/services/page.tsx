@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageShell } from "@/components/site/PageShell";
 import { PageHero } from "@/components/site/PageHero";
 import { CtaBand } from "@/components/site/CtaBand";
@@ -90,8 +91,9 @@ const SERVICES = [
   {
     title: "Print, Signage & Graphics",
     description:
-      "Custom vinyl decals, vehicle wraps, heat-transfer graphics, large-format printing, and environmental branding for physical spaces.",
+      "Custom vinyl decals, vehicle wraps, banners, yard signs, apparel, and promotional products — produced through our partnership with 411 Graphics and quoted via our Quick Quote program.",
     deliverables: ["Vinyl graphics", "Vehicle wraps", "Signage", "Print collateral"],
+    href: "/print",
   },
   {
     title: "360° Virtual Tours",
@@ -155,6 +157,14 @@ export default function ServicesPage() {
                       </li>
                     ))}
                   </ul>
+                  {"href" in service && service.href ? (
+                    <Link
+                      href={service.href}
+                      className="editorial-link mt-6 inline-flex text-sm"
+                    >
+                      View print catalog &amp; request a quote
+                    </Link>
+                  ) : null}
                 </div>
               </article>
               {i < SERVICES.length - 1 ? <HairlineReveal className="mt-20 md:mt-24" /> : null}
