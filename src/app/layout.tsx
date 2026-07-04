@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Hanken_Grotesk } from "next/font/google";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 const hanken = Hanken_Grotesk({
@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${hanken.variable} h-full`}>
+    <html lang="en" className={`${fraunces.variable} ${hanken.variable} h-full`}>
       <body className="min-h-full page-enter">
         <MotionProvider>{children}</MotionProvider>
       </body>
