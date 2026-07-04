@@ -1,14 +1,35 @@
-import Image from "next/image";
 import Link from "next/link";
-import { EditorialReveal, EditorialStagger } from "@/components/editorial/EditorialReveal";
+import { EditorialReveal } from "@/components/editorial/EditorialReveal";
+import { SpotIllustration } from "@/components/editorial/IllustrationFrame";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Accent } from "@/components/editorial/Accent";
+import { ILLUSTRATIONS } from "@/lib/illustrations";
 
 const GALLERY = [
-  { src: "/img/home/brand-strategy.jpg", alt: "Brand identity system spread on a worktable", label: "Identity" },
-  { src: "/img/home/web-experience.jpg", alt: "Website design displayed across devices", label: "Web & landing pages" },
-  { src: "/img/home/social-campaign.jpg", alt: "Social campaign content in production", label: "Campaign creative" },
-  { src: "/img/home/video-set.jpg", alt: "Video production set with cinema camera", label: "Film & video" },
+  {
+    spot: ILLUSTRATIONS.spots.svcBrand,
+    alt: "Hand-drawn creative workspace flat lay with camera and sketchbook",
+    label: "Identity",
+    caption: "Brand systems & guidelines",
+  },
+  {
+    spot: ILLUSTRATIONS.spots.svcWeb,
+    alt: "Hand-drawn browser window with upward trend line",
+    label: "Web & landing pages",
+    caption: "Built to convert",
+  },
+  {
+    spot: ILLUSTRATIONS.spots.svcContent,
+    alt: "Hand-drawn speech bubbles and smartphone",
+    label: "Campaign creative",
+    caption: "Email, social & ad assets",
+  },
+  {
+    spot: ILLUSTRATIONS.spots.svcVideo,
+    alt: "Hand-drawn vintage film camera on a tripod",
+    label: "Film & video",
+    caption: "Concept through final cut",
+  },
 ];
 
 export function CreativeShowcase() {
@@ -27,22 +48,21 @@ export function CreativeShowcase() {
           </p>
         </EditorialReveal>
 
-        <EditorialStagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" stagger={0.08}>
-          {GALLERY.map((item) => (
-            <figure key={item.src} className="group">
-              <div className="border-hairline relative aspect-[3/4] overflow-hidden bg-cream">
-                <Image
-                  src={item.src}
-                  alt={item.alt}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                />
-              </div>
-              <figcaption className="eyebrow mt-3 text-[0.625rem] text-ink/55">{item.label}</figcaption>
-            </figure>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {GALLERY.map((item, i) => (
+            <EditorialReveal key={item.label} delay={(i % 4) * 0.08}>
+              <figure className="group">
+                <div className="border-hairline flex aspect-[3/4] flex-col items-center justify-center gap-6 bg-cream p-8 transition-colors duration-500 group-hover:bg-cream/60">
+                  <SpotIllustration src={item.spot} alt={item.alt} size={128} />
+                  <p className="eyebrow text-center text-[0.5625rem] text-ink/45">{item.caption}</p>
+                </div>
+                <figcaption className="eyebrow mt-3 text-[0.625rem] text-ink/55">
+                  {item.label}
+                </figcaption>
+              </figure>
+            </EditorialReveal>
           ))}
-        </EditorialStagger>
+        </div>
 
         <EditorialReveal delay={0.1} className="mt-12 text-center">
           <Link href="/services#creative" className="editorial-link">

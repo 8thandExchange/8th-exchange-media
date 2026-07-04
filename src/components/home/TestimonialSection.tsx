@@ -1,21 +1,27 @@
 import Image from "next/image";
 import { EditorialReveal } from "@/components/editorial/EditorialReveal";
 import { Accent } from "@/components/editorial/Accent";
+import { ILLUSTRATIONS } from "@/lib/illustrations";
 
 export function TestimonialSection() {
   return (
     <section className="surface-navy py-20 md:py-28">
       <div className="container-content relative">
-        <div className="grid items-center gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+        <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <EditorialReveal>
-            <div className="border-hairline relative aspect-[4/5] overflow-hidden border-cream/15">
-              <Image
-                src="/img/home/work-hospitality.jpg"
-                alt="Client hospitality brand brought to life across channels"
-                fill
-                sizes="(max-width: 1024px) 100vw, 32rem"
-                className="object-cover"
-              />
+            <div className="border border-cream/15 bg-cream p-5 md:p-6">
+              <div className="relative aspect-[4/3]">
+                <Image
+                  src={ILLUSTRATIONS.features.family}
+                  alt="Hand-drawn row of traditional buildings on cream paper"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 36rem"
+                  className="object-cover object-center"
+                />
+              </div>
+              <p className="eyebrow mt-4 text-center text-[0.5625rem] text-ink/45">
+                Hospitality group · Augusta, GA
+              </p>
             </div>
           </EditorialReveal>
 
