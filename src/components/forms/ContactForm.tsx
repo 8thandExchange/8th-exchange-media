@@ -13,14 +13,15 @@ const BUDGETS = [
 ];
 
 const SERVICE_OPTIONS = [
-  "Brand & Strategy",
-  "Web & Digital",
-  "Content & Social",
-  "Search & Performance",
-  "Video & Production",
-  "Drone & Aerial",
-  "Print & Signage",
-  "360 Virtual Tours",
+  "Email & SMS Marketing",
+  "Marketing Automation",
+  "Social Media",
+  "Digital Ads & Search",
+  "Websites & Landing Pages",
+  "Audience & CRM",
+  "Analytics & Reporting",
+  "Brand & Creative",
+  "Video, Drone & Production",
   "Full-Service Partnership",
 ];
 
