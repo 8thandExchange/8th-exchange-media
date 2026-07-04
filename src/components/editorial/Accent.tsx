@@ -45,7 +45,7 @@ export function AccentUnderline({ children, className }: AccentUnderlineProps) {
       {children}
       <Accent
         kind="underline"
-        className="absolute -bottom-1 left-0 w-full max-w-none opacity-80"
+        className="absolute left-0 top-full h-[0.22em] w-full max-w-none opacity-80 -mt-[0.08em]"
         width={140}
         height={14}
       />
