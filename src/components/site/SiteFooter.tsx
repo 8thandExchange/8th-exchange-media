@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { FooterLogo } from "@/components/brand/Logo";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { FEATURED_SERVICES } from "@/lib/services";
 import { HairlineReveal } from "@/components/editorial/HairlineReveal";
 
 const FOOTER_NAV = [
-  { href: "/services", label: "Services" },
+  { href: "/services", label: "All Services" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },
 ];
@@ -25,12 +26,12 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-navy/10 bg-paper py-16 md:py-20">
       <div className="container-content">
-        <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr_1fr_0.8fr]">
+        <div className="grid gap-12 lg:grid-cols-[1.2fr_1.1fr_0.9fr_0.9fr_0.9fr]">
           <div>
             <FooterLogo />
             <p className="type-body mt-6 max-w-sm text-ink/70">
-              Full-service media for brands that value craft, clarity, and steady performance. A
-              division of{" "}
+              Full-funnel marketing for brands that value craft, clarity, and steady performance.
+              A division of{" "}
               <a
                 href="https://8thandexchangecapital.com"
                 className="editorial-link normal-case tracking-normal"
@@ -41,6 +42,19 @@ export function SiteFooter() {
               </a>
               .
             </p>
+          </div>
+
+          <div>
+            <p className="eyebrow eyebrow-on-light mb-4">Services</p>
+            <ul className="space-y-2">
+              {FEATURED_SERVICES.map((svc) => (
+                <li key={svc.slug}>
+                  <Link href={`/services#${svc.slug}`} className="nav-link normal-case">
+                    {svc.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div>

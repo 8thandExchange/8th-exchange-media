@@ -8,7 +8,7 @@
   --color-cream: #f4efe3;
   --color-paper: #fbf8f1;
   --color-ink: #0a1424;
-  --font-display: var(--font-playfair), Georgia, serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
   --font-body: var(--font-hanken), Inter, sans-serif;
   --radius-DEFAULT: 0px;
   --max-width-content: 70rem;
@@ -57,11 +57,13 @@ body > * {
   font-family: var(--font-display);
 }
 
+/* Display serif — upright, soft, slightly wonky at large sizes (Fraunces) */
 .type-display {
   font-family: var(--font-display);
   font-size: var(--8e-fs-display);
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 560;
+  font-style: normal;
+  font-variation-settings: "SOFT" 60, "WONK" 1, "opsz" 100;
   line-height: var(--8e-lh-display);
   letter-spacing: var(--8e-track-display);
   color: var(--8e-navy);
@@ -70,8 +72,9 @@ body > * {
 .type-h2 {
   font-family: var(--font-display);
   font-size: var(--8e-fs-h2);
-  font-weight: 500;
-  font-style: italic;
+  font-weight: 560;
+  font-style: normal;
+  font-variation-settings: "SOFT" 60, "WONK" 1, "opsz" 72;
   line-height: var(--8e-lh-h2);
   color: var(--8e-navy);
 }

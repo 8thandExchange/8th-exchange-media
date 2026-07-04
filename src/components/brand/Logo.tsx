@@ -84,7 +84,7 @@ function CoinMark({ className }: { className?: string }) {
         x="111"
         y="164"
         textAnchor="middle"
-        fontFamily="var(--font-playfair), 'Playfair Display', Georgia, serif"
+        fontFamily="var(--font-fraunces), Fraunces, Georgia, serif"
         fontWeight="600"
         fontSize="70"
         fill="#0B1B3D"
@@ -96,7 +96,7 @@ function CoinMark({ className }: { className?: string }) {
         x="170"
         y="164"
         textAnchor="middle"
-        fontFamily="var(--font-playfair), 'Playfair Display', Georgia, serif"
+        fontFamily="var(--font-fraunces), Fraunces, Georgia, serif"
         fontWeight="600"
         fontSize="70"
         fill="#0B1B3D"
@@ -107,7 +107,7 @@ function CoinMark({ className }: { className?: string }) {
   );
 }
 
-/** Coin mark + Playfair wordmark — legible on the navy header bar */
+/** Coin mark + serif wordmark — legible on the navy header bar */
 export function HeaderLogo({ priority = false }: HeaderLogoProps) {
   const size = SIZES["coin-cream"];
   return (

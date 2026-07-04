@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Hanken_Grotesk } from "next/font/google";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 const hanken = Hanken_Grotesk({
@@ -20,11 +20,11 @@ const hanken = Hanken_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "8th & Exchange Media | Full-Service Media Company",
+    default: "8th & Exchange Media | Full-Funnel Marketing Agency",
     template: "%s | 8th & Exchange Media",
   },
   description:
-    "8th & Exchange Media is a full-service media company delivering brand strategy, creative production, digital marketing, and performance media. A division of 8th & Exchange Capital.",
+    "8th & Exchange Media is a full-funnel marketing agency — email, SMS, social, ads, automation, audience management, creative production, and analytics, delivered by one team. A division of 8th & Exchange Capital.",
   icons: {
     icon: [
       { url: "/brand/assets/favicon/favicon-16.png", sizes: "16x16", type: "image/png" },
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
     apple: "/brand/assets/favicon/apple-touch-icon-180.png",
   },
   openGraph: {
-    title: "8th & Exchange Media | Full-Service Media Company",
+    title: "8th & Exchange Media | Full-Funnel Marketing Agency",
     description:
-      "Strategy, creative, production, and performance — a media studio built on restraint and flawless execution.",
+      "Email, SMS, social, ads, and automation — one agency team that plans, produces, and optimizes your marketing on every channel.",
     type: "website",
     locale: "en_US",
     url: SITE_URL,
@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${hanken.variable} h-full`}>
+    <html lang="en" className={`${fraunces.variable} ${hanken.variable} h-full`}>
       <body className="min-h-full page-enter">
         <MotionProvider>{children}</MotionProvider>
       </body>
