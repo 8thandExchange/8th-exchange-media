@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { ILLUSTRATIONS } from "@/lib/illustrations";
 import { DURATION, EASE, fadeUp, transition } from "@/lib/motion";
 
 const STAT_CHIPS = [
@@ -11,6 +12,53 @@ const STAT_CHIPS = [
   { label: "Return on ad spend", value: "2.4×" },
   { label: "Journey", value: "Welcome series · live" },
 ];
+
+/** Mock campaign-editor card — drawn in the same language as the journey and calendar cards */
+function CampaignCard() {
+  return (
+    <div className="border-hairline bg-paper p-6 text-left shadow-[0_24px_64px_-32px_rgba(11,27,61,0.35)] md:p-8">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="eyebrow eyebrow-on-light">Email campaign — June promo</p>
+        <span className="border border-navy/20 px-2.5 py-1 text-[0.5625rem] font-semibold uppercase tracking-[0.14em] text-ink/55">
+          Scheduled
+        </span>
+      </div>
+
+      <div className="mt-5 border-b border-navy/10 pb-4">
+        <p className="eyebrow text-[0.5625rem] text-ink/40">Subject</p>
+        <p className="font-display mt-1 text-xl text-navy">
+          The Summer Edit — early access inside
+        </p>
+      </div>
+
+      <div className="mt-6 grid items-center gap-6 sm:grid-cols-[8rem_minmax(0,1fr)]">
+        <div className="relative mx-auto h-28 w-28 sm:mx-0">
+          <Image
+            src={ILLUSTRATIONS.spots.svcContent}
+            alt="Hand-drawn speech bubbles and smartphone"
+            fill
+            sizes="112px"
+            className="object-contain"
+          />
+        </div>
+        <div className="space-y-2.5" aria-hidden>
+          <div className="h-2 w-full rounded-full bg-navy/10" />
+          <div className="h-2 w-11/12 rounded-full bg-navy/10" />
+          <div className="h-2 w-4/5 rounded-full bg-navy/10" />
+          <div className="h-2 w-2/3 rounded-full bg-navy/[0.07]" />
+          <span className="mt-2 inline-block bg-navy px-4 py-2 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-cream">
+            Shop early access
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-navy/10 pt-4">
+        <p className="text-xs text-ink/55">Segment: Repeat customers · 4,218 recipients</p>
+        <p className="text-xs text-ink/55">Sends Tue 10:00 AM · optimized per contact</p>
+      </div>
+    </div>
+  );
+}
 
 export function CampaignHero() {
   const reduced = useReducedMotion();
@@ -65,24 +113,15 @@ export function CampaignHero() {
           initial={reduced ? false : { opacity: 0, y: 48 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: DURATION.slow, ease: EASE, delay: 0.35 }}
-          className="relative mx-auto mt-14 max-w-4xl md:mt-16"
+          className="relative mx-auto mt-14 max-w-3xl md:mt-16"
         >
-          <div className="border-hairline relative aspect-[16/9] overflow-hidden bg-cream shadow-[0_24px_64px_-32px_rgba(11,27,61,0.35)]">
-            <Image
-              src="/img/home/social-campaign.jpg"
-              alt="Campaign creative being produced in the studio"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 56rem"
-              className="object-cover"
-            />
-          </div>
+          <CampaignCard />
 
-          <div className="pointer-events-none absolute inset-x-4 -bottom-6 flex flex-wrap justify-center gap-3 md:inset-x-auto md:-right-6 md:bottom-8 md:flex-col md:items-end">
+          <div className="pointer-events-none absolute inset-x-4 -bottom-6 flex flex-wrap justify-center gap-3 md:inset-x-auto md:-right-10 md:bottom-8 md:flex-col md:items-end">
             {STAT_CHIPS.map((chip) => (
               <div
                 key={chip.label}
-                className="flex items-baseline gap-2 border border-navy/10 bg-paper px-4 py-2.5 shadow-[0_12px_32px_-16px_rgba(11,27,61,0.4)]"
+                className="flex items-baseline gap-2 border border-navy/10 bg-cream px-4 py-2.5 shadow-[0_12px_32px_-16px_rgba(11,27,61,0.4)]"
               >
                 <span className="font-display text-lg italic text-navy">{chip.value}</span>
                 <span className="eyebrow text-[0.5625rem] text-ink/50">{chip.label}</span>
