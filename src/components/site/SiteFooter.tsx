@@ -19,6 +19,7 @@ const FAMILY = [
 const LEGAL = [
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms of Service" },
+  { href: "/portal/login", label: "Client Portal" },
   { href: "/invoicing/login", label: "Staff Login" },
 ];
 
