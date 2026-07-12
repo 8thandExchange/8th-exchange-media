@@ -12,6 +12,11 @@ const navItems = [
   { href: "/invoicing/payment-links", label: "Payment links" },
 ];
 
+const portalNavItems = [
+  { href: "/invoicing/requests", label: "Requests" },
+  { href: "/invoicing/clients", label: "Portal clients" },
+];
+
 export function InvoicingSidebar() {
   const pathname = usePathname();
 
@@ -36,6 +41,19 @@ export function InvoicingSidebar() {
           const active = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn("inv-nav-link", active && "active")}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+        <div className="inv-nav-section">Client portal</div>
+        {portalNavItems.map((item) => {
+          const active = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
