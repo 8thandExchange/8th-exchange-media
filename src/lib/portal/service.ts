@@ -325,3 +325,60 @@ export async function updateLead(
   const { error } = await getPortalDb().from("onboarding_leads").update(patch).eq("id", id);
   throwIfError(error);
 }
+
+/* ── Brand kits ──────────────────────────────────── */
+
+export interface BrandColor {
+  name: string;
+  hex: string;
+  usage?: string;
+}
+
+export interface BrandLink {
+  label: string;
+  url: string;
+}
+
+/**
+ * Machine-readable brand system for a client. Every field is optional so
+ * kits can grow over time; consumers (AI tools, templates, integrations)
+ * should treat missing fields as "not yet defined".
+ */
+export interface BrandKit {
+  tagline?: string;
+  mission?: string;
+  audience?: string;
+  voiceTone?: string;
+  voiceDos?: string[];
+  voiceDonts?: string[];
+  colors?: BrandColor[];
+  headingFont?: string;
+  bodyFont?: string;
+  typographyNotes?: string;
+  logos?: BrandLink[];
+  assets?: BrandLink[];
+  socials?: Record<string, string>;
+  keywords?: string[];
+  competitors?: string[];
+  notes?: string;
+}
+
+export async function getBrandKit(clientId: string): Promise<BrandKit | null> {
+  const { data, error } = await getPortalDb()
+    .from("brand_kits")
+    .select("kit")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  throwIfError(error);
+  return (data?.kit as BrandKit) ?? null;
+}
+
+export async function upsertBrandKit(clientId: string, kit: BrandKit): Promise<void> {
+  const { error } = await getPortalDb()
+    .from("brand_kits")
+    .upsert(
+      { client_id: clientId, kit, updated_at: new Date().toISOString() },
+      { onConflict: "client_id" }
+    );
+  throwIfError(error);
+}

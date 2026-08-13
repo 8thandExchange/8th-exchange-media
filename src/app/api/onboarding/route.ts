@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { pushContactToGhl } from "@/lib/ghl";
 import { createLead } from "@/lib/portal/service";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -102,6 +103,24 @@ export async function POST(request: Request) {
         })
         .catch((err) => console.error("Lead notification email failed", err));
     }
+
+    pushContactToGhl({
+      name: contactName,
+      email,
+      phone: lead.phone ?? undefined,
+      companyName: company,
+      website: lead.website ?? undefined,
+      source: "8emedia.com onboarding",
+      tags: ["8e-onboarding", ...(lead.budget ? [`budget: ${lead.budget}`] : [])],
+      notes: [
+        lead.goals.length ? `Goals: ${lead.goals.join(", ")}` : null,
+        lead.services.length ? `Services: ${lead.services.join(", ")}` : null,
+        lead.timeline ? `Timeline: ${lead.timeline}` : null,
+        lead.notes ? `Notes: ${lead.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    }).catch((err) => console.error("GHL contact push failed", err));
 
     return Response.json({ ok: true });
   } catch (error) {

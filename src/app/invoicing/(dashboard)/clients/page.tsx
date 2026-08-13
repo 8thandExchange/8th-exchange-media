@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { NewClientForm, ResetCodeButton } from "@/components/portal/NewClientForm";
 import { listClients } from "@/lib/portal/service";
 
@@ -31,7 +32,11 @@ export default async function StaffClientsPage() {
             <tbody>
               {clients.map((c) => (
                 <tr key={c.id}>
-                  <td>{c.company}</td>
+                  <td>
+                    <Link href={`/invoicing/clients/${c.id}`} className="inv-link">
+                      {c.company}
+                    </Link>
+                  </td>
                   <td>{c.contact_name}</td>
                   <td>{c.email}</td>
                   <td>
