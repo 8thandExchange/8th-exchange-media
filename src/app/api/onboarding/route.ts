@@ -104,7 +104,10 @@ export async function POST(request: Request) {
         .catch((err) => console.error("Lead notification email failed", err));
     }
 
-    pushContactToGhl({
+    // Must be awaited: Vercel freezes the function once the response is
+    // sent, so an un-awaited call would never execute. Failures are still
+    // swallowed so a GHL outage can't break onboarding.
+    await pushContactToGhl({
       name: contactName,
       email,
       phone: lead.phone ?? undefined,
