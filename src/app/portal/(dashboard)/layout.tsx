@@ -33,7 +33,10 @@ export default async function PortalDashboardLayout({
           </Link>
 
           <div className="flex items-center gap-5">
-            <span className="text-sm text-ink/60">{client.company}</span>
+            <Link href="/portal/brand" className="nav-link">
+              Brand Kit
+            </Link>
+            <span className="hidden text-sm text-ink/60 sm:block">{client.company}</span>
             <form action="/api/portal/auth" method="POST">
               <input type="hidden" name="action" value="logout" />
               <button type="submit" className="nav-link">
