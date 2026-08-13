@@ -13,6 +13,7 @@ const navItems = [
 ];
 
 const portalNavItems = [
+  { href: "/invoicing/leads", label: "Leads" },
   { href: "/invoicing/requests", label: "Requests" },
   { href: "/invoicing/clients", label: "Portal clients" },
 ];

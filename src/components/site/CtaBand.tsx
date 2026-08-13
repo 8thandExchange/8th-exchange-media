@@ -13,7 +13,7 @@ export function CtaBand({
   title,
   description,
   buttonText = "Start a Project",
-  href = "/contact",
+  href = "/onboarding",
 }: CtaBandProps) {
   return (
     <section className="border-t border-navy/10 bg-paper py-20 md:py-24">

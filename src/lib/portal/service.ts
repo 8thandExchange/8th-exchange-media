@@ -236,3 +236,92 @@ export async function addFile(input: {
   throwIfError(error);
   return data!;
 }
+
+/* ── Onboarding leads ────────────────────────────── */
+
+export type LeadStatus = "new" | "contacted" | "converted" | "archived";
+
+export interface OnboardingLead {
+  id: string;
+  company: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  industry: string | null;
+  goals: string[];
+  services: string[];
+  socials: Record<string, string>;
+  brand_assets: string | null;
+  budget: string | null;
+  timeline: string | null;
+  notes: string | null;
+  status: LeadStatus;
+  client_id: string | null;
+  created_at: string;
+}
+
+export async function createLead(input: {
+  company: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  industry?: string;
+  goals: string[];
+  services: string[];
+  socials: Record<string, string>;
+  brandAssets?: string;
+  budget?: string;
+  timeline?: string;
+  notes?: string;
+}): Promise<OnboardingLead> {
+  const { data, error } = await getPortalDb()
+    .from("onboarding_leads")
+    .insert({
+      company: input.company,
+      contact_name: input.contactName,
+      email: input.email.trim().toLowerCase(),
+      phone: input.phone ?? null,
+      website: input.website ?? null,
+      industry: input.industry ?? null,
+      goals: input.goals,
+      services: input.services,
+      socials: input.socials,
+      brand_assets: input.brandAssets ?? null,
+      budget: input.budget ?? null,
+      timeline: input.timeline ?? null,
+      notes: input.notes ?? null,
+    })
+    .select("*")
+    .single();
+  throwIfError(error);
+  return data!;
+}
+
+export async function listLeads(): Promise<OnboardingLead[]> {
+  const { data, error } = await getPortalDb()
+    .from("onboarding_leads")
+    .select("*")
+    .order("created_at", { ascending: false });
+  throwIfError(error);
+  return data ?? [];
+}
+
+export async function getLead(id: string): Promise<OnboardingLead | null> {
+  const { data, error } = await getPortalDb()
+    .from("onboarding_leads")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  throwIfError(error);
+  return data;
+}
+
+export async function updateLead(
+  id: string,
+  patch: { status?: LeadStatus; client_id?: string }
+): Promise<void> {
+  const { error } = await getPortalDb().from("onboarding_leads").update(patch).eq("id", id);
+  throwIfError(error);
+}

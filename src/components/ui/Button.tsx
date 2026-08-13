@@ -9,6 +9,7 @@ interface ButtonProps {
   className?: string;
   type?: "button" | "submit";
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 export function Button({
@@ -19,6 +20,7 @@ export function Button({
   className,
   type = "button",
   disabled,
+  onClick,
 }: ButtonProps) {
   const classes = cn(
     "btn",
@@ -42,7 +44,7 @@ export function Button({
   }
 
   return (
-    <button type={type} className={classes} disabled={disabled}>
+    <button type={type} className={classes} disabled={disabled} onClick={onClick}>
       {children}
     </button>
   );
