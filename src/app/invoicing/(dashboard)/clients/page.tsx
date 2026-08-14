@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewClientForm } from "@/components/portal/NewClientForm";
+import { CHECKLIST_TOTAL, checklistProgress } from "@/lib/portal/checklist";
 import { listClients } from "@/lib/portal/service";
 
 export default async function StaffClientsPage() {
@@ -27,25 +28,34 @@ export default async function StaffClientsPage() {
                 <th>Contact</th>
                 <th>Email</th>
                 <th>GHL</th>
+                <th>Checklist</th>
               </tr>
             </thead>
             <tbody>
-              {clients.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link href={`/invoicing/clients/${c.id}`} className="inv-link">
-                      {c.company}
-                    </Link>
-                  </td>
-                  <td>{c.contact_name}</td>
-                  <td>{c.email}</td>
-                  <td>
-                    <span className={`inv-badge ${c.ghl_location_id ? "inv-badge-paid" : "inv-badge-open"}`}>
-                      {c.ghl_location_id ? "Connected" : "Not connected"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {clients.map((c) => {
+                const done = checklistProgress(c.onboarding_checklist ?? {});
+                return (
+                  <tr key={c.id}>
+                    <td>
+                      <Link href={`/invoicing/clients/${c.id}`} className="inv-link">
+                        {c.company}
+                      </Link>
+                    </td>
+                    <td>{c.contact_name}</td>
+                    <td>{c.email}</td>
+                    <td>
+                      <span className={`inv-badge ${c.ghl_location_id ? "inv-badge-paid" : "inv-badge-open"}`}>
+                        {c.ghl_location_id ? "Connected" : "Not connected"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`inv-badge ${done === CHECKLIST_TOTAL ? "inv-badge-paid" : "inv-badge-open"}`}>
+                        {done}/{CHECKLIST_TOTAL}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

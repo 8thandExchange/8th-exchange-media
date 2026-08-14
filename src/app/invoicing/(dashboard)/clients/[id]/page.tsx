@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
+import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
 import { getBrandKit, getClientById } from "@/lib/portal/service";
 import { getStripe } from "@/lib/stripe";
 
@@ -61,6 +62,10 @@ export default async function StaffClientDetailPage({
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>
         <GhlSettingsForm clientId={client.id} connectedLocationId={client.ghl_location_id} />
+      </div>
+
+      <div style={{ marginTop: "1rem" }}>
+        <OnboardingChecklist clientId={client.id} initialState={client.onboarding_checklist} />
       </div>
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>

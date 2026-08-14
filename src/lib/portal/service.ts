@@ -1,4 +1,5 @@
 import { getPortalDb } from "@/lib/portal/db";
+import type { ChecklistState } from "@/lib/portal/checklist";
 
 export type RequestStatus = "new" | "in_progress" | "in_review" | "delivered" | "closed";
 export type RequestPriority = "standard" | "rush";
@@ -32,6 +33,8 @@ export interface PortalClient {
   socials: Record<string, string>;
   /** Stripe holds the actual payment method; we store only the reference. */
   stripe_customer_id: string | null;
+  /** Digital-presence checklist progress; canonical items in lib/portal/checklist. */
+  onboarding_checklist: ChecklistState;
   created_at: string;
 }
 
@@ -83,7 +86,7 @@ export async function getClientByEmail(email: string): Promise<PortalClient | nu
 export async function getClientById(id: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
     .eq("id", id)
     .maybeSingle();
   throwIfError(error);
@@ -93,7 +96,7 @@ export async function getClientById(id: string): Promise<PortalClient | null> {
 export async function listClients(): Promise<PortalClient[]> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
     .order("company");
   throwIfError(error);
   return data ?? [];
@@ -119,7 +122,7 @@ export async function createPortalClient(input: {
       website: input.website ?? null,
       socials: input.socials ?? {},
     })
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
     .single();
   throwIfError(error);
   return data!;
@@ -146,6 +149,26 @@ export async function updateClientProfile(
   if (Object.keys(update).length === 0) return;
   const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
   throwIfError(error);
+}
+
+/** Merge checklist entries into the stored state (read-modify-write). */
+export async function updateClientChecklist(
+  clientId: string,
+  entries: ChecklistState
+): Promise<void> {
+  const db = getPortalDb();
+  const { data, error } = await db
+    .from("portal_clients")
+    .select("onboarding_checklist")
+    .eq("id", clientId)
+    .maybeSingle();
+  throwIfError(error);
+  const merged = { ...((data?.onboarding_checklist as ChecklistState) ?? {}), ...entries };
+  const { error: updateError } = await db
+    .from("portal_clients")
+    .update({ onboarding_checklist: merged })
+    .eq("id", clientId);
+  throwIfError(updateError);
 }
 
 export async function setClientStripeCustomer(clientId: string, customerId: string): Promise<void> {
