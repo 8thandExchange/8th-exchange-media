@@ -92,7 +92,7 @@ export default function PrintPage() {
                     <h3 className="font-display text-2xl italic text-navy">{cat.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-ink/65">{cat.summary}</p>
                   </div>
-                  <div className="grid gap-px overflow-hidden border border-navy/10 bg-navy/10 sm:grid-cols-2">
+                  <div className="elevate grid gap-px overflow-hidden border border-navy/10 bg-navy/10 sm:grid-cols-2">
                     {cat.products.map((p) => (
                       <article key={p.name} className="bg-paper p-6">
                         <div className="flex flex-wrap items-baseline justify-between gap-2">

@@ -9,8 +9,8 @@ export function BrandTile({ brand, index }: { brand: PortfolioBrand; index: numb
   const inner = (
     <article
       className={cn(
-        "group flex h-full flex-col justify-between border p-8 transition-colors md:p-10",
-        "border-white/10 bg-navy hover:border-gold/40"
+        "group elevate elevate-hover flex h-full flex-col justify-between border p-8 md:p-10",
+        "border-white/10 bg-navy transition-colors hover:border-gold/40"
       )}
     >
       <div>

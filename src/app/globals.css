@@ -182,6 +182,62 @@ body > * {
   padding: 0.75rem 1.625rem;
 }
 
+/* ── Depth system ─────────────────────────────────────────────
+   Layered, navy-tinted shadows + hover lift. The flat hairline look
+   stays the foundation; depth is applied where the eye should land:
+   cards, tiles, and primary CTAs. Motion respects reduced-motion. */
+:root {
+  --shadow-rest:
+    0 1px 2px rgba(11, 27, 61, 0.05),
+    0 10px 28px -14px rgba(11, 27, 61, 0.16);
+  --shadow-lift:
+    0 2px 4px rgba(11, 27, 61, 0.07),
+    0 22px 48px -18px rgba(11, 27, 61, 0.28);
+  --shadow-gold-glow: 0 8px 28px -8px rgba(197, 160, 89, 0.55);
+}
+
+.elevate {
+  box-shadow: var(--shadow-rest);
+  transition: box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.elevate-hover:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-3px);
+}
+
+.btn-pill-on-dark-gold,
+.btn-pill-on-light,
+.btn-pill-on-dark {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s ease;
+}
+
+.btn-pill-on-dark-gold:hover {
+  box-shadow: var(--shadow-gold-glow);
+  transform: translateY(-2px);
+}
+
+.btn-pill-on-light:hover,
+.btn-pill-on-dark:hover {
+  box-shadow: var(--shadow-rest);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elevate,
+  .elevate-hover:hover,
+  .btn-pill-on-dark-gold:hover,
+  .btn-pill-on-light:hover,
+  .btn-pill-on-dark:hover {
+    transform: none;
+  }
+}
+
 .btn-pill-on-light {
   border: 1.5px solid var(--8e-navy);
   color: var(--8e-navy);
