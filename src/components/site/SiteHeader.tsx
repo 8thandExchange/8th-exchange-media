@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/services", label: "Services" },
+  { href: "/work", label: "Work" },
   { href: "/about", label: "Studio" },
   { href: "/contact", label: "Contact" },
 ];
@@ -70,8 +71,8 @@ export function SiteHeader() {
               </span>
             ))}
             <span className="mx-6 h-3.5 w-px bg-cream/[0.12]" aria-hidden />
-            <Button href="/onboarding" tone="dark-gold" pill>
-              Start a Project
+            <Button href="/growth-map" tone="dark-gold" pill>
+              Get Your Growth Map
             </Button>
           </nav>
 
@@ -129,8 +130,8 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Button href="/onboarding" tone="dark-gold" pill className="mt-2">
-            Start a Project
+          <Button href="/growth-map" tone="dark-gold" pill className="mt-2">
+            Get Your Growth Map
           </Button>
         </nav>
       </div>

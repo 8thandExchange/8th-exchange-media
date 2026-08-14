@@ -13,7 +13,7 @@ const FOOTER_NAV = [
 const FAMILY = [
   { href: "https://8thandexchangecapital.com", label: "8th & Exchange Capital" },
   { href: "https://www.8thstreetconstruction.com", label: "8th Street Construction" },
-  { href: "#", label: "Exchange House Hospitality" },
+  { href: "https://elevatedhealthaugusta.com", label: "Elevated Health Augusta" },
 ];
 
 const LEGAL = [

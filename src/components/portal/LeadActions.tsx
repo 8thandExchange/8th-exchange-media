@@ -6,7 +6,7 @@ import { useState } from "react";
 export function LeadActions({ leadId, status }: { leadId: string; status: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [code, setCode] = useState<string | null>(null);
+  const [converted, setConverted] = useState(false);
   const [error, setError] = useState("");
 
   async function setStatus(next: string) {
@@ -36,24 +36,22 @@ export function LeadActions({ leadId, status }: { leadId: string; status: string
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = (await response.json().catch(() => null)) as
-        | { accessCode?: string; error?: string }
-        | null;
-      if (!response.ok || !data?.accessCode) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
         setError(data?.error ?? "Convert failed");
         return;
       }
-      setCode(data.accessCode);
+      setConverted(true);
       router.refresh();
     } finally {
       setBusy(false);
     }
   }
 
-  if (code) {
+  if (converted) {
     return (
-      <span title="One-time access code — share securely">
-        Portal code: <code style={{ fontWeight: 700 }}>{code}</code>
+      <span>
+        Converted — they can sign in at 8emedia.com/portal with their email.
       </span>
     );
   }

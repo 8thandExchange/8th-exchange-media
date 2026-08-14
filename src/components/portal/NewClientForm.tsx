@@ -10,7 +10,7 @@ export function NewClientForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [issuedCode, setIssuedCode] = useState<string | null>(null);
+  const [created, setCreated] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -24,16 +24,14 @@ export function NewClientForm() {
         body: JSON.stringify({ company, contactName, email }),
       });
 
-      const data = (await response.json().catch(() => null)) as
-        | { accessCode?: string; error?: string }
-        | null;
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
 
-      if (!response.ok || !data?.accessCode) {
+      if (!response.ok) {
         setError(data?.error ?? "Failed to create client");
         return;
       }
 
-      setIssuedCode(data.accessCode);
+      setCreated(true);
       setCompany("");
       setContactName("");
       setEmail("");
@@ -49,10 +47,10 @@ export function NewClientForm() {
     <div className="inv-card">
       <div className="inv-detail-label">New portal client</div>
 
-      {issuedCode ? (
+      {created ? (
         <div className="inv-alert inv-alert-success">
-          Client created. Their access code — <strong>shown only once, share it securely</strong>:{" "}
-          <code style={{ fontSize: "1rem", fontWeight: 700 }}>{issuedCode}</code>
+          Client created. Nothing to share — they sign in at 8emedia.com/portal with their email,
+          and we send a one-time code each visit.
         </div>
       ) : null}
       {error ? <div className="inv-alert inv-alert-error">{error}</div> : null}
@@ -105,38 +103,3 @@ export function NewClientForm() {
   );
 }
 
-export function ResetCodeButton({ clientId }: { clientId: string }) {
-  const [code, setCode] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function reset() {
-    if (!window.confirm("Generate a new access code? The old one stops working immediately.")) {
-      return;
-    }
-    setBusy(true);
-    try {
-      const response = await fetch(`/api/portal/admin/clients/${clientId}/reset-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = (await response.json().catch(() => null)) as { accessCode?: string } | null;
-      if (response.ok && data?.accessCode) setCode(data.accessCode);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (code) {
-    return (
-      <code style={{ fontWeight: 700 }} title="Shown only once — share securely">
-        {code}
-      </code>
-    );
-  }
-
-  return (
-    <button type="button" className="inv-btn inv-btn-ghost" onClick={reset} disabled={busy}>
-      {busy ? "…" : "Reset code"}
-    </button>
-  );
-}

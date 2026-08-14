@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { fadeUp, transition, viewport } from "@/lib/motion";
+import { riseUp, transition, viewport } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface EditorialRevealProps {
@@ -32,7 +32,7 @@ export function EditorialReveal({
       initial="hidden"
       whileInView="visible"
       viewport={viewport}
-      variants={fadeUp}
+      variants={riseUp}
       transition={transition(delay, duration)}
     >
       {children}
@@ -80,7 +80,7 @@ export function EditorialStaggerItem({
   if (reduced) return <div className={className}>{children}</div>;
 
   return (
-    <motion.div className={className} variants={fadeUp} transition={transition()}>
+    <motion.div className={className} variants={riseUp} transition={transition()}>
       {children}
     </motion.div>
   );

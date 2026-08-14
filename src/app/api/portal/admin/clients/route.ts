@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
-import { generateAccessCode, hashAccessCode } from "@/lib/portal/auth";
 import { createPortalClient, listClients } from "@/lib/portal/service";
 
 export async function GET() {
@@ -36,17 +35,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const accessCode = generateAccessCode();
     const client = await createPortalClient({
       company: body.company.trim(),
       contactName: body.contactName.trim(),
       email: body.email,
-      accessCodeHash: hashAccessCode(accessCode),
       brandNotes: body.brandNotes?.trim() || undefined,
     });
 
-    // The plaintext code is returned exactly once — share it with the client securely.
-    return NextResponse.json({ client, accessCode });
+    // No credential to hand over: clients sign in with an emailed one-time code.
+    return NextResponse.json({ client });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create client";
     return NextResponse.json({ error: message }, { status: 500 });

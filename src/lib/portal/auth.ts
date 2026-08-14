@@ -35,30 +35,6 @@ function verifyToken(token: string): string | null {
   return payload;
 }
 
-/** Human-friendly access code, e.g. "K3NF-Q7XT-2MHB" (no 0/O/1/I). */
-export function generateAccessCode(): string {
-  const alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-  const pick = () => alphabet[crypto.randomInt(alphabet.length)];
-  const group = () => Array.from({ length: 4 }, pick).join("");
-  return `${group()}-${group()}-${group()}`;
-}
-
-export function hashAccessCode(code: string): string {
-  const normalized = code.trim().toUpperCase();
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(normalized, salt, 32).toString("hex");
-  return `${salt}:${hash}`;
-}
-
-export function verifyAccessCode(code: string, stored: string): boolean {
-  const [salt, hash] = stored.split(":");
-  if (!salt || !hash) return false;
-  const normalized = code.trim().toUpperCase();
-  const candidate = crypto.scryptSync(normalized, salt, 32).toString("hex");
-  if (candidate.length !== hash.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(hash));
-}
-
 export async function createPortalSession(clientId: string): Promise<void> {
   const expiresAt = Date.now() + SESSION_TTL_MS;
   const payload = Buffer.from(JSON.stringify({ cid: clientId, exp: expiresAt })).toString(
