@@ -57,7 +57,7 @@ Right now: "Book Your $79 Wellness Assessment." Suby's seven ingredients are all
 
 > **The $79 Elevated Baseline** — 30–45 minutes with our RN: full health history, vitals, body composition, and a written, personalized treatment roadmap you keep whether or not you ever come back. *(Value stack: $79 visit + body-comp analysis + written roadmap — itemize it.)* **Why $79?** Because we'd rather earn your trust with an honest baseline than bill your insurance $400 for a rushed physical. **Guarantee:** you leave with a written plan in hand, or the visit is free. **Capacity:** our RN sees a limited number of new assessments each week — real scarcity, state it as such.
 
-Note the guarantee is about the *deliverable* (a written plan), never a clinical outcome — that keeps it inside both medical-marketing rules and the clinic's own no-outcome-promises guardrail. Bonus/premium candidate (owner decision): apply the $79 as a credit toward first-month membership on enrollment.
+Note the guarantee is about the *deliverable* (a written plan), never a clinical outcome — that keeps it inside both medical-marketing rules and the clinic's own no-outcome-promises guardrail. **Owner decision 2026-08-13: launch the reframed offer with NO guarantee language at all** — the "or it's free" line above is on hold; revisit with the first month of data. Bonus/premium candidate (still open): apply the $79 as a credit toward first-month membership on enrollment.
 
 ### GAP 5: no nurture (Magic Lantern) behind any capture
 GHL sequences to build per line, 80% value / 20% pitch, each piece open-looping the next, soft CTA to the assessment: V1 "How to read your own lab report" → V2 "Three things that move these markers in 30 days" → V3 "What treatment actually looks like here (a walkthrough, no names)" → book. The phone AI already captures name/phone/email/interest on every call — **those captured leads currently go into a nurture void**; wire them into the same sequences.
@@ -102,9 +102,15 @@ King Kong's own funnel is the template: high-volume founder-led creative → fre
 Remove the fabricated testimonial · compute real LTV/max-CAC from Stripe cohorts · write the three EHA avatars + one 8E avatar (HALO: local FB groups, competitor Google reviews, Reddit r/trt r/Semaglutide, call-log language from the phone AI transcripts) · build HVCO #1 + opt-in page + 3-part nurture (EHA) and the Growth Map offer page + application rework (8E) · reframe the $79 assessment per GAP 4 · start the review engine · start weekly email (both brands) · connect EHA's GHL location in the 8E portal.
 
 **Days 31–60 — traffic on (bounded by max CAC):**
-Google Search on buy-intent terms (EHA; 8E optional) · Meta education campaigns → HVCOs · platform health-ad certification for GLP-1/TRT · founder/RN short-form program 3×/week both brands (owner decision: who is on camera — the phone-line no-names rule is a phone rule, not necessarily an ads rule, but it's the owner's call) · doctor-frame enrollment script live · HVCOs #2–3.
+Google Search on buy-intent terms (EHA; 8E optional) · Meta education campaigns → HVCOs · platform health-ad certification for GLP-1/TRT · short-form program 3×/week both brands — **decided 2026-08-13: Caroline (RN) and Madison (NP) front the clinic creative**; the physician stays off-camera, consistent with the phone-line posture · doctor-frame enrollment script live · HVCOs #2–3.
 
 **Days 61–90 — compound:**
 Program pages rebuilt to 17-step anatomy · referral program (incentive = owner decision) · win-back sequence with provider-gated Maintain · first EHA case-study numbers into 8E's proof wall · quarterly LTV/CAC review ritual → budgets re-derived · kill/scale ad decisions purely on ROI ("the only metric that truly matters").
 
-**Owner decisions needed:** on-camera policy (who fronts the creative) · $79-as-credit premium · referral incentive · guarantee wording sign-off · monthly ad budget ceiling (derived from GAP 2 math once real retention is in) · EHA as named 8E case study.
+**Owner decisions — resolved 2026-08-13:**
+- **On camera:** Caroline (RN) and Madison (NP) front the clinic's short-form creative; physician off-camera.
+- **Guarantee:** none at launch — run the reframed $79 offer without risk-reversal language; revisit with data.
+- **Referral incentive:** $50 account credit each way (referrer's next month, referee's first month), on any program enrollment.
+- **Case study:** EHA approved as 8E Media's **named** flagship case study — aggregate marketing numbers only, never patient data; disclose the common ownership wherever it's published.
+
+**Still open:** $79-as-credit enrollment premium · monthly ad budget ceiling (derived from GAP 2 math once real Stripe retention is in).
