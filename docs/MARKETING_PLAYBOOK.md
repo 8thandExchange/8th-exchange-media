@@ -1,0 +1,53 @@
+# 8th & Exchange Media — Marketing Playbook
+**Date:** 2026-08-13
+**Framework:** Sabri Suby's Sell Like Crazy 8-phase system + his 2024–26 updates. Full gap analysis (this agency *and* Elevated Health Augusta) in `SUBY_GAP_ANALYSIS_2026-08.md`, kept identical in both repos.
+
+Two jobs for one playbook: (1) how 8E markets **itself** — the agency must be its own reference implementation — and (2) the operating rules for how 8E executes for **clients**, starting with EHA, so both funnels stay consistent.
+
+---
+
+## 1. The 8E funnel (target state)
+
+```
+TRAFFIC    founder-led short-form, 3×/week, 3-second hooks, own Social Planner
+           (+ optional paid once the offer converts organically)
+BAIT       HVCO: "The 5-point creative autopsy — why your cost per lead
+           doubled this year" (teardown format)
+CAPTURE    stripped opt-in page → 8E GHL location
+NURTURE    3-part teardown email series (80% value / 20% pitch)
+OFFER      THE GROWTH MAP — free 30-min strategy session, $1,000 stated value:
+           we audit your ads, funnel, and follow-up BEFORE the call; you leave
+           with a written 90-day growth map whether or not you hire us.
+           Reason-why: we'd rather show than pitch. Scarcity: N new clients
+           per quarter (real capacity, state it honestly).
+CONVERT    onboarding wizard = the application (budget, goals, timeline,
+           + readiness 1–10). Low scorers → nurture, not calendar.
+           Session runs doctor-frame: diagnose, 2-minute pitch, silence.
+ASCEND     productized entry (audit/sprint) → retainer → portfolio work.
+           Weekly plain-text teardown email to the list — the owned asset.
+```
+
+Non-negotiables from the gap analysis:
+- **The free session must actually deliver the written map.** King Kong's own Trustpilot complaints are about thin "free" sessions that are all pitch. The deliverable *is* the marketing.
+- **Proof wall = real numbers only.** Fill StatGrid with true counts; grow them. The EHA engagement is the flagship case study — instrument CAC/bookings/member growth from day one so publishable numbers exist (publish only with EHA's approval).
+- **Run our own ads eventually; publish our own account.** An agency with no ads of its own is unbelievable.
+- **Economics before spend:** retainer LTV → max CAC, reviewed quarterly. A discounted or guarantee-backed first month is *paid acquisition*, priced from that math — not a favor.
+
+## 2. Client execution rules (consistency layer)
+
+1. **One brand, one GHL location.** Client campaigns, contacts, and Social Planner posts run in the client's own sub-account via the per-client scoping (client page → "Go High Level sub-account"). Never post or sync a client's audience through 8E's location.
+2. **Client guardrails travel with the work.** Every client's compliance/claims rules live in their brand-kit notes in the portal, and every asset that states a price, names a product, or makes a claim is checked against the client's source-of-truth docs before publish. For EHA that means: `docs/pricing/pricing_source_of_truth.md` (every price), no outcome guarantees (deliverable guarantees only), no staff names without owner approval, GLP-1 Maintain = retention only / never acquisition, retatrutide never marketed, discontinued services never advertised, cash-pay clarity before checkout, marketing SMS only against explicit marketing consent.
+3. **Same funnel anatomy for every client:** avatar (HALO verbatim language) → HVCO → stripped opt-in → Godfather-framed entry offer → Magic Lantern nurture → application/triage → doctor-frame close → ascension + owned email. The client plan documents each phase (see EHA's `docs/marketing/MARKETING_PLAN_2026-08.md` as the template).
+4. **Creative program:** ~3 new short-form pieces/week per active brand, founder/staff-led where the client allows, pattern-interrupt inside 3 seconds, native over polished, every piece pointing at ONE conversion action. AI drafts volume (brand-kit voice feeds the prompts); a human edits every piece into the avatar's language.
+5. **Scoreboard is ROI only.** Report CAC vs the client's derived max-CAC, cost per opt-in, nurture→booking rate, and revenue attributed — not impressions. Kill/scale on those numbers.
+
+## 3. Build backlog (this repo)
+
+- [ ] Growth Map offer page (17-step anatomy, long-form) replacing "start a project" as the primary CTA target
+- [ ] HVCO #1 asset + stripped opt-in page (no site nav) → GHL
+- [ ] Onboarding wizard: add readiness/motivation (1–10) + current-results questions; score-based routing (calendar vs nurture)
+- [ ] 3-part Magic Lantern teardown email sequence (GHL)
+- [ ] StatGrid proof wall with real numbers; case-study slot for EHA
+- [ ] Weekly plain-text email cadence (owned list)
+- [ ] Exit-intent variant of the Growth Map offer
+- [ ] Social Planner: EHA connected (location id + PIT token via client page) and posting cadence live for both brands
