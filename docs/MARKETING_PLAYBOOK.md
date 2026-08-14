@@ -29,7 +29,7 @@ ASCEND     productized entry (audit/sprint) → retainer → portfolio work.
 
 Non-negotiables from the gap analysis:
 - **The free session must actually deliver the written map.** King Kong's own Trustpilot complaints are about thin "free" sessions that are all pitch. The deliverable *is* the marketing.
-- **Proof wall = real numbers only.** Fill StatGrid with true counts; grow them. The EHA engagement is the flagship case study — instrument CAC/bookings/member growth from day one so publishable numbers exist (publish only with EHA's approval).
+- **Proof wall = real numbers only.** Fill StatGrid with true counts; grow them. The EHA engagement is the flagship case study — instrument CAC/bookings/member growth from day one. **Approved 2026-08-13: EHA may be published by name with aggregate marketing numbers (never patient data), with the common ownership disclosed wherever it appears.**
 - **Run our own ads eventually; publish our own account.** An agency with no ads of its own is unbelievable.
 - **Economics before spend:** retainer LTV → max CAC, reviewed quarterly. A discounted or guarantee-backed first month is *paid acquisition*, priced from that math — not a favor.
 
