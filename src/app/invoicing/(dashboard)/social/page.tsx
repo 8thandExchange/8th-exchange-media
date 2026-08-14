@@ -24,7 +24,14 @@ export default async function StaffSocialPage({
   const params = await searchParams;
   const selectedClientId = params.client ?? null;
 
-  const clients = await listClients();
+  // The brand picker must never take the whole planner down with it —
+  // agency posting works even if the portal database is unreachable.
+  let clients: Awaited<ReturnType<typeof listClients>> = [];
+  try {
+    clients = await listClients();
+  } catch (error) {
+    console.error("Social Planner: could not load client list", error);
+  }
   const ghlClients = clients.filter((c) => c.active && c.ghl_location_id);
   const selectedClient = selectedClientId
     ? clients.find((c) => c.id === selectedClientId) ?? null
@@ -61,10 +68,16 @@ export default async function StaffSocialPage({
       </div>
 
       <div
-        className="inv-field"
-        style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          marginBottom: "1.25rem",
+        }}
       >
-        <span className="inv-label" style={{ margin: 0 }}>
+        <span className="inv-detail-label" style={{ margin: 0 }}>
           Brand
         </span>
         <Link
@@ -82,7 +95,7 @@ export default async function StaffSocialPage({
             {c.company}
           </Link>
         ))}
-        <span className="inv-page-subtitle" style={{ margin: 0 }}>
+        <span style={{ fontSize: "12.5px", color: "var(--inv-text-muted)" }}>
           Connect more clients from their client page.
         </span>
       </div>
