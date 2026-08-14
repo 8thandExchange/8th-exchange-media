@@ -52,7 +52,7 @@ export function InvoicingSidebar() {
 
   return (
     <aside className="inv-sidebar">
-      <div className="inv-sidebar-brand">
+      <Link href="/" className="inv-sidebar-brand" title="Back to 8emedia.com">
         <Image
           src="/brand/assets/logo/coin-reversed-gold-antiqued.svg"
           alt=""
@@ -64,7 +64,7 @@ export function InvoicingSidebar() {
           <div className="inv-sidebar-brand-title">8th &amp; Exchange</div>
           <div className="inv-sidebar-brand-sub">Studio Dashboard</div>
         </div>
-      </div>
+      </Link>
       <nav className="inv-nav">
         {NAV_GROUPS.map((group) => (
           <div key={group.section}>

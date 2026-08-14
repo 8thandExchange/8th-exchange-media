@@ -16,7 +16,12 @@ export const metadata = pageMetadata({
   image: ILLUSTRATIONS.spots.contact ?? undefined,
 });
 
-export default function ContactPage() {
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ service?: string }>;
+}) {
+  const { service } = await searchParams;
   return (
     <PageShell>
       <PageHero
@@ -78,6 +83,7 @@ export default function ContactPage() {
                 showPhone
                 showServiceSelect
                 submitLabel="Send inquiry"
+                initialService={service}
               />
             </EditorialReveal>
           </div>
