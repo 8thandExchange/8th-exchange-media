@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import { MotionProvider } from "@/components/motion/MotionProvider";
+import { CookieConsent } from "@/components/site/CookieConsent";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${hanken.variable} h-full`}>
       <body className="min-h-full page-enter">
         <MotionProvider>{children}</MotionProvider>
+        <CookieConsent />
       </body>
     </html>
   );
