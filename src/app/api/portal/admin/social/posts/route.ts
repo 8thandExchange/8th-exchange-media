@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
 import { createSocialPost, listSocialPosts } from "@/lib/ghl";
+import { resolveGhlAuth } from "@/lib/portal/ghlAuth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireInvoicingAuth();
-    const posts = await listSocialPosts();
+    const clientId = new URL(request.url).searchParams.get("clientId");
+    const { auth } = await resolveGhlAuth(clientId);
+    const posts = await listSocialPosts(auth);
     return NextResponse.json({ posts });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unauthorized";
@@ -27,7 +30,12 @@ export async function POST(request: Request) {
       mediaUrls?: string[];
       scheduleDate?: string;
       status?: string;
+      clientId?: string;
     };
+
+    const { auth } = await resolveGhlAuth(
+      typeof body.clientId === "string" && body.clientId ? body.clientId : null
+    );
 
     if (!body.summary?.trim()) {
       return NextResponse.json({ error: "Post text is required" }, { status: 400 });
@@ -74,7 +82,7 @@ export async function POST(request: Request) {
       mediaUrls,
       scheduleDate,
       status,
-    });
+    }, auth);
 
     return NextResponse.json({ ok: true, result });
   } catch (error) {

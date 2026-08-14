@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
+import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
 import { getBrandKit, getClientById } from "@/lib/portal/service";
 
 export default async function StaffClientDetailPage({
@@ -35,6 +36,10 @@ export default async function StaffClientDetailPage({
           <strong>Onboarding notes:</strong> {client.brand_notes}
         </div>
       ) : null}
+
+      <div className="inv-card" style={{ marginTop: "1rem" }}>
+        <GhlSettingsForm clientId={client.id} connectedLocationId={client.ghl_location_id} />
+      </div>
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>
         <BrandKitEditor clientId={client.id} initialKit={kit} />
