@@ -100,8 +100,8 @@ export function CampaignHero() {
             variants={fadeUp}
             transition={transition(0.18, DURATION.base)}
           >
-            <Button href="/contact" tone="light" pill>
-              Start a Project
+            <Button href="/growth-map" tone="light" pill>
+              Get Your Free Growth Map
             </Button>
             <Button href="/services" tone="light">
               Explore Services

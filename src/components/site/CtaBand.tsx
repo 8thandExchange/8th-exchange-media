@@ -12,8 +12,8 @@ interface CtaBandProps {
 export function CtaBand({
   title,
   description,
-  buttonText = "Start a Project",
-  href = "/onboarding",
+  buttonText = "Get Your Free Growth Map",
+  href = "/growth-map",
 }: CtaBandProps) {
   return (
     <section className="border-t border-navy/10 bg-paper py-20 md:py-24">
