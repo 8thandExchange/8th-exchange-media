@@ -25,6 +25,13 @@ export interface PortalClient {
   brand_notes: string | null;
   /** GHL sub-account (location) id; null until the client is connected. */
   ghl_location_id: string | null;
+  /* Provisioning profile — what a GHL sub-account setup asks for. */
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  socials: Record<string, string>;
+  /** Stripe holds the actual payment method; we store only the reference. */
+  stripe_customer_id: string | null;
   created_at: string;
 }
 
@@ -76,7 +83,7 @@ export async function getClientByEmail(email: string): Promise<PortalClient | nu
 export async function getClientById(id: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
     .eq("id", id)
     .maybeSingle();
   throwIfError(error);
@@ -86,7 +93,7 @@ export async function getClientById(id: string): Promise<PortalClient | null> {
 export async function listClients(): Promise<PortalClient[]> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
     .order("company");
   throwIfError(error);
   return data ?? [];
@@ -97,6 +104,9 @@ export async function createPortalClient(input: {
   contactName: string;
   email: string;
   brandNotes?: string;
+  phone?: string | null;
+  website?: string | null;
+  socials?: Record<string, string>;
 }): Promise<PortalClient> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
@@ -105,17 +115,43 @@ export async function createPortalClient(input: {
       contact_name: input.contactName,
       email: input.email.trim().toLowerCase(),
       brand_notes: input.brandNotes ?? null,
+      phone: input.phone ?? null,
+      website: input.website ?? null,
+      socials: input.socials ?? {},
     })
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, created_at")
     .single();
   throwIfError(error);
   return data!;
 }
 
-export async function setClientAccessCode(clientId: string, accessCodeHash: string): Promise<void> {
+export async function updateClientProfile(
+  clientId: string,
+  fields: {
+    phone?: string | null;
+    website?: string | null;
+    address?: string | null;
+    socials?: Record<string, string>;
+    contactName?: string;
+    company?: string;
+  }
+): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (fields.phone !== undefined) update.phone = fields.phone;
+  if (fields.website !== undefined) update.website = fields.website;
+  if (fields.address !== undefined) update.address = fields.address;
+  if (fields.socials !== undefined) update.socials = fields.socials;
+  if (fields.contactName !== undefined) update.contact_name = fields.contactName;
+  if (fields.company !== undefined) update.company = fields.company;
+  if (Object.keys(update).length === 0) return;
+  const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
+  throwIfError(error);
+}
+
+export async function setClientStripeCustomer(clientId: string, customerId: string): Promise<void> {
   const { error } = await getPortalDb()
     .from("portal_clients")
-    .update({ access_code_hash: accessCodeHash })
+    .update({ stripe_customer_id: customerId })
     .eq("id", clientId);
   throwIfError(error);
 }
