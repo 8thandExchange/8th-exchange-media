@@ -4,7 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { GhlSocialAccount } from "@/lib/ghl";
 
-export function SocialComposer({ accounts }: { accounts: GhlSocialAccount[] }) {
+export function SocialComposer({
+  accounts,
+  clientId,
+}: {
+  accounts: GhlSocialAccount[];
+  /** Post as this client's GHL sub-account; null posts as the agency. */
+  clientId: string | null;
+}) {
   const router = useRouter();
   const [summary, setSummary] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
@@ -30,6 +37,7 @@ export function SocialComposer({ accounts }: { accounts: GhlSocialAccount[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           summary,
+          clientId: clientId ?? undefined,
           accountIds: selected,
           mediaUrls: mediaUrl.trim() ? [mediaUrl.trim()] : [],
           scheduleDate:

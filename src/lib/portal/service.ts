@@ -23,6 +23,8 @@ export interface PortalClient {
   email: string;
   active: boolean;
   brand_notes: string | null;
+  /** GHL sub-account (location) id; null until the client is connected. */
+  ghl_location_id: string | null;
   created_at: string;
 }
 
@@ -76,7 +78,7 @@ export async function getClientByEmail(email: string): Promise<
 export async function getClientById(id: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
     .eq("id", id)
     .maybeSingle();
   throwIfError(error);
@@ -86,7 +88,7 @@ export async function getClientById(id: string): Promise<PortalClient | null> {
 export async function listClients(): Promise<PortalClient[]> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
     .order("company");
   throwIfError(error);
   return data ?? [];
@@ -108,7 +110,7 @@ export async function createPortalClient(input: {
       access_code_hash: input.accessCodeHash,
       brand_notes: input.brandNotes ?? null,
     })
-    .select("id, company, contact_name, email, active, brand_notes, created_at")
+    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")
     .single();
   throwIfError(error);
   return data!;
@@ -118,6 +120,39 @@ export async function setClientAccessCode(clientId: string, accessCodeHash: stri
   const { error } = await getPortalDb()
     .from("portal_clients")
     .update({ access_code_hash: accessCodeHash })
+    .eq("id", clientId);
+  throwIfError(error);
+}
+
+/* ── Client GHL sub-accounts ─────────────────────── */
+
+/**
+ * The client's own GHL credentials, for running campaigns in *their*
+ * sub-account. Server-only: the token must never reach the browser.
+ * Returns null when the client has no GHL connection configured.
+ */
+export async function getClientGhlAuth(
+  clientId: string
+): Promise<{ token: string; locationId: string } | null> {
+  const { data, error } = await getPortalDb()
+    .from("portal_clients")
+    .select("ghl_location_id, ghl_api_token")
+    .eq("id", clientId)
+    .maybeSingle();
+  throwIfError(error);
+  if (!data?.ghl_location_id || !data.ghl_api_token) return null;
+  return { token: data.ghl_api_token, locationId: data.ghl_location_id };
+}
+
+/** Set or clear (both null) a client's GHL sub-account credentials. */
+export async function setClientGhl(
+  clientId: string,
+  locationId: string | null,
+  apiToken: string | null
+): Promise<void> {
+  const { error } = await getPortalDb()
+    .from("portal_clients")
+    .update({ ghl_location_id: locationId, ghl_api_token: apiToken })
     .eq("id", clientId);
   throwIfError(error);
 }

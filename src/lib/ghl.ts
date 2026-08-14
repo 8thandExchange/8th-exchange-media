@@ -1,16 +1,25 @@
 /**
  * Go High Level (LeadConnector) integration.
  *
- * Uses a Private Integration token (GHL_API_TOKEN) scoped to the agency's
- * sub-account plus that sub-account's location id (GHL_LOCATION_ID).
- * All calls are fire-and-forget from our routes: a GHL outage must never
- * break the user-facing flow, so callers should .catch and log.
+ * Every call is scoped to a sub-account: a Private Integration token plus
+ * that sub-account's location id (a GhlAuth). The agency's own sub-account
+ * comes from env (GHL_API_TOKEN / GHL_LOCATION_ID); client sub-accounts
+ * come from their portal_clients row (see getClientGhlAuth in portal/service).
+ * Contact pushes are fire-and-forget from our routes: a GHL outage must
+ * never break the user-facing flow, so callers should .catch and log.
  */
 
 const GHL_BASE = "https://services.leadconnectorhq.com";
 const GHL_VERSION = "2021-07-28";
 
-function ghlConfig(): { token: string; locationId: string } | null {
+/** Credentials for one GHL sub-account (location). */
+export interface GhlAuth {
+  token: string;
+  locationId: string;
+}
+
+/** The agency's own sub-account, from env. Null when not configured. */
+export function agencyGhlAuth(): GhlAuth | null {
   const token = process.env.GHL_API_TOKEN;
   const locationId = process.env.GHL_LOCATION_ID;
   if (!token || !locationId) return null;
@@ -32,8 +41,11 @@ export interface GhlContactInput {
  * Upsert a contact in GHL. Returns the contact id, or null when the
  * integration is not configured or the API call fails (callers log).
  */
-export async function pushContactToGhl(input: GhlContactInput): Promise<string | null> {
-  const config = ghlConfig();
+export async function pushContactToGhl(
+  input: GhlContactInput,
+  auth?: GhlAuth
+): Promise<string | null> {
+  const config = auth ?? agencyGhlAuth();
   if (!config) return null;
 
   const [firstName, ...restName] = input.name.trim().split(/\s+/);
@@ -103,13 +115,12 @@ export interface GhlSocialPost {
   media?: { url: string }[];
 }
 
-function requireGhlConfig(): { token: string; locationId: string } {
-  const token = process.env.GHL_API_TOKEN;
-  const locationId = process.env.GHL_LOCATION_ID;
-  if (!token || !locationId) {
+function requireGhlAuth(auth?: GhlAuth): GhlAuth {
+  const config = auth ?? agencyGhlAuth();
+  if (!config) {
     throw new Error("GHL_API_TOKEN and GHL_LOCATION_ID must be configured");
   }
-  return { token, locationId };
+  return config;
 }
 
 function ghlHeaders(token: string): Record<string, string> {
@@ -121,11 +132,11 @@ function ghlHeaders(token: string): Record<string, string> {
   };
 }
 
-export async function listSocialAccounts(): Promise<{
+export async function listSocialAccounts(auth?: GhlAuth): Promise<{
   accounts: GhlSocialAccount[];
   groups: unknown[];
 }> {
-  const { token, locationId } = requireGhlConfig();
+  const { token, locationId } = requireGhlAuth(auth);
   const response = await fetch(
     `${GHL_BASE}/social-media-posting/${locationId}/accounts`,
     { headers: ghlHeaders(token), cache: "no-store" }
@@ -149,8 +160,8 @@ export async function createSocialPost(input: {
   /** ISO timestamp; when set, status becomes "scheduled". */
   scheduleDate?: string;
   status?: "draft" | "scheduled" | "published";
-}): Promise<unknown> {
-  const { token, locationId } = requireGhlConfig();
+}, auth?: GhlAuth): Promise<unknown> {
+  const { token, locationId } = requireGhlAuth(auth);
 
   const body: Record<string, unknown> = {
     accountIds: input.accountIds,
@@ -174,8 +185,8 @@ export async function createSocialPost(input: {
   return response.json();
 }
 
-export async function listSocialPosts(): Promise<GhlSocialPost[]> {
-  const { token, locationId } = requireGhlConfig();
+export async function listSocialPosts(auth?: GhlAuth): Promise<GhlSocialPost[]> {
+  const { token, locationId } = requireGhlAuth(auth);
 
   const now = Date.now();
   const response = await fetch(
