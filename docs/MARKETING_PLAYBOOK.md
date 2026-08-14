@@ -53,3 +53,29 @@ Non-negotiables from the gap analysis:
 - [ ] Weekly plain-text email cadence (owned list)
 - [ ] Exit-intent variant of the Growth Map offer
 - [ ] Social Planner: EHA connected (location id + PIT token via client page) and posting cadence live for both brands
+
+## 4. Portfolio rollout — the assembly line
+
+Every family brand goes through the same line. One brand per wave; a wave ships when its machine produces measurable weeks, not when the next brand gets impatient.
+
+**Per-brand checklist (the "8E treatment"):**
+1. Portal client + brand kit loaded (voice, colors, guardrails, links).
+2. Own GHL location connected via the client page (location id + PIT token — never 8E's).
+3. Universal trio first: speed-to-lead, missed-call text-back, review engine (copy adapted from the EHA/8E kits).
+4. Avatar (HALO verbatim language) → Godfather-framed entry offer → HVCO + stripped opt-in → 3-part nurture.
+5. Content cadence: 3 short-form/week from a monthly 2-hour shoot; one conversion action.
+6. Pipeline in GHL; monthly numbers logged.
+7. Paid traffic last, budgeted from that brand's LTV → max CAC.
+
+**Waves (by economics and readiness):**
+- **Wave 1 — Elevated Health Augusta** (live): recurring revenue, best LTV, the flagship case study.
+- **Wave 2 — CourtPro Augusta + 8th Street Construction**: high-ticket local services are the easiest direct-response wins. Entry offers in the Growth Map mold: CourtPro "free court assessment + written resurfacing plan"; 8th Street "free site walk + budget range letter."
+- **Wave 3 — Wetzel's + Dink'd**: hospitality/community brands run on reviews, social, and events more than funnels — the trio plus content cadence carries most of the weight.
+- **Line of Duty Medical**: a platform launch, not a local funnel — its own plan when it's ready.
+
+**8E sells outward** only after two internal case studies have real numbers. The pitch is then a shown artifact, not a promise: "here's the machine running on our own companies; here's what a customer costs them now."
+
+**The owner's cadence (the whole job, ~3 hours/week):**
+- **Weekly:** film or approve the 3 posts per active brand · glance at pipeline columns ("which column grew?") · unstick anything staff flagged.
+- **Monthly:** LTV/CAC review per brand · log case-study numbers · pick ONE experiment (new hook, new offer variant, new channel) — never three.
+- **Quarterly:** re-derive budgets from the math · re-read the gap analysis · decide the next wave.
