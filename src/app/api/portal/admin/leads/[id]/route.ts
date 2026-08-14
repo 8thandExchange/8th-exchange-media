@@ -71,6 +71,9 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       contactName: lead.contact_name,
       email: lead.email,
       brandNotes: brandNotes || undefined,
+      phone: lead.phone,
+      website: lead.website,
+      socials: lead.socials,
     });
 
     await updateLead(id, { status: "converted", client_id: client.id });
