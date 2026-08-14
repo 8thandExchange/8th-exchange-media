@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
-import { generateAccessCode, hashAccessCode } from "@/lib/portal/auth";
 import {
   createPortalClient,
   getLead,
@@ -67,18 +66,16 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       .filter(Boolean)
       .join("\n");
 
-    const accessCode = generateAccessCode();
     const client = await createPortalClient({
       company: lead.company,
       contactName: lead.contact_name,
       email: lead.email,
-      accessCodeHash: hashAccessCode(accessCode),
       brandNotes: brandNotes || undefined,
     });
 
     await updateLead(id, { status: "converted", client_id: client.id });
 
-    return NextResponse.json({ client, accessCode });
+    return NextResponse.json({ client });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to convert lead";
     return NextResponse.json({ error: message }, { status: 500 });

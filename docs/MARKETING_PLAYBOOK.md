@@ -43,7 +43,9 @@ Non-negotiables from the gap analysis:
 
 ## 3. Build backlog (this repo)
 
-- [ ] Growth Map offer page (17-step anatomy, long-form) replacing "start a project" as the primary CTA target
+- [x] Growth Map offer page (17-step anatomy, long-form) replacing "start a project" as the primary CTA target — live, all primary CTAs point at /growth-map
+- [x] Homepage rebuilt on the editorial identity (the Mailchimp-parity SaaS pastiche, its fabricated stats, and the undisclosed anonymous testimonial are gone); /work portfolio page added (family brands, ownership disclosed)
+- [x] Portal sign-in replaced with emailed one-time codes (no more permanent access code); staff password field gained show/hide
 - [ ] HVCO #1 asset + stripped opt-in page (no site nav) → GHL
 - [ ] Onboarding wizard: add readiness/motivation (1–10) + current-results questions; score-based routing (calendar vs nurture)
 - [ ] 3-part Magic Lantern teardown email sequence (GHL)

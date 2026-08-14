@@ -63,9 +63,7 @@ function throwIfError(error: { message: string } | null): void {
 
 /* ── Clients ─────────────────────────────────────── */
 
-export async function getClientByEmail(email: string): Promise<
-  (PortalClient & { access_code_hash: string }) | null
-> {
+export async function getClientByEmail(email: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
     .select("*")
@@ -98,7 +96,6 @@ export async function createPortalClient(input: {
   company: string;
   contactName: string;
   email: string;
-  accessCodeHash: string;
   brandNotes?: string;
 }): Promise<PortalClient> {
   const { data, error } = await getPortalDb()
@@ -107,7 +104,6 @@ export async function createPortalClient(input: {
       company: input.company,
       contact_name: input.contactName,
       email: input.email.trim().toLowerCase(),
-      access_code_hash: input.accessCodeHash,
       brand_notes: input.brandNotes ?? null,
     })
     .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, created_at")

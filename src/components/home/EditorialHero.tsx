@@ -52,19 +52,19 @@ export function EditorialHero() {
             variants={fadeUp}
             transition={transition(0.1, DURATION.slow)}
           >
-            Strategy, creative, production, and performance — one studio, one standard, measured
-            in work that holds up over time.
+            Strategy, creative, production, and performance — one studio, one standard, and one
+            scoreboard: what a customer costs, and what they&apos;re worth.
           </motion.p>
           <motion.div
             className="mt-10 flex flex-wrap justify-center gap-4"
             variants={fadeUp}
             transition={transition(0.18, DURATION.base)}
           >
-            <Button href="/contact" tone="light" pill>
-              Start a Project
+            <Button href="/growth-map" tone="light" pill>
+              Get Your Free Growth Map
             </Button>
-            <Button href="/services" tone="light" className="btn-on-light">
-              Our Services
+            <Button href="/work" tone="light" className="btn-on-light">
+              See the Work
             </Button>
           </motion.div>
         </motion.div>

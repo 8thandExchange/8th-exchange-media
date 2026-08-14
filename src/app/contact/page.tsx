@@ -2,7 +2,6 @@ import { PageShell } from "@/components/site/PageShell";
 import { PageHero } from "@/components/site/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { EditorialReveal } from "@/components/editorial/EditorialReveal";
-import { SpotIllustration } from "@/components/editorial/IllustrationFrame";
 import { Accent } from "@/components/editorial/Accent";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ILLUSTRATIONS } from "@/lib/illustrations";

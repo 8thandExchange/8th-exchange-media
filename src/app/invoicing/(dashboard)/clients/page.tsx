@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NewClientForm, ResetCodeButton } from "@/components/portal/NewClientForm";
+import { NewClientForm } from "@/components/portal/NewClientForm";
 import { listClients } from "@/lib/portal/service";
 
 export default async function StaffClientsPage() {
@@ -26,7 +26,7 @@ export default async function StaffClientsPage() {
                 <th>Company</th>
                 <th>Contact</th>
                 <th>Email</th>
-                <th>Access code</th>
+                <th>GHL</th>
               </tr>
             </thead>
             <tbody>
@@ -40,7 +40,9 @@ export default async function StaffClientsPage() {
                   <td>{c.contact_name}</td>
                   <td>{c.email}</td>
                   <td>
-                    <ResetCodeButton clientId={c.id} />
+                    <span className={`inv-badge ${c.ghl_location_id ? "inv-badge-paid" : "inv-badge-open"}`}>
+                      {c.ghl_location_id ? "Connected" : "Not connected"}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -50,7 +52,9 @@ export default async function StaffClientsPage() {
       ) : (
         <div className="inv-empty mt-6">
           <div className="inv-empty-title">No portal clients yet</div>
-          <p className="inv-empty-text">Create the first one above and share the access code.</p>
+          <p className="inv-empty-text">
+            Create the first one above — they sign in with their email, no code to share.
+          </p>
         </div>
       )}
     </div>

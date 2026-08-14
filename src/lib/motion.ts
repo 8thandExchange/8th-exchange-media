@@ -14,6 +14,17 @@ export const fadeUp = {
   visible: { opacity: 1, y: 0 },
 };
 
+/**
+ * Scroll-reveal variant for content sections: TRANSFORM ONLY, never
+ * opacity. Content gated behind JS-driven opacity is invisible whenever
+ * an animation stalls (slow devices, throttled tabs, no JS) and reads as
+ * a broken page. A rise is enhancement; a blank section is a bug.
+ */
+export const riseUp = {
+  hidden: { y: 28 },
+  visible: { y: 0 },
+};
+
 export const fadeIn = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
