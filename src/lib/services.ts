@@ -225,7 +225,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
         title: "Print, Signage & Graphics",
         tagline: "Vehicle wraps, signage, and large-format printing for physical spaces.",
         description:
-          "Custom vinyl decals, vehicle wraps, heat-transfer graphics, large-format printing, and environmental branding for physical spaces.",
+          "Custom vinyl decals, vehicle wraps, heat-transfer graphics, large-format printing, and environmental branding for physical spaces. Produced through our 411 Graphics partnership — browse the full catalog and request Quick Quote pricing at /print.",
         deliverables: ["Vinyl graphics", "Vehicle wraps", "Signage", "Print collateral"],
         spot: ILLUSTRATIONS.spots.svcPrint,
         spotAlt: "Hand-drawn framed artwork with gallery plaque",

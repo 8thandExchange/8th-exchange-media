@@ -22,6 +22,7 @@ const SERVICE_OPTIONS = [
   "Analytics & Reporting",
   "Brand & Creative",
   "Video, Drone & Production",
+  "Print & Signage Quote",
   "Full-Service Partnership",
 ];
 
@@ -30,6 +31,8 @@ interface ContactFormProps {
   showServiceSelect?: boolean;
   submitLabel?: string;
   tone?: "dark" | "light";
+  /** Pre-select a service (e.g. from a ?service= link); must match SERVICE_OPTIONS. */
+  initialService?: string;
 }
 
 export function ContactForm({
@@ -37,9 +40,12 @@ export function ContactForm({
   showServiceSelect = false,
   submitLabel = "Send Inquiry",
   tone = "dark",
+  initialService,
 }: ContactFormProps) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [service, setService] = useState("");
+  const [service, setService] = useState(
+    initialService && SERVICE_OPTIONS.includes(initialService) ? initialService : ""
+  );
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const dark = tone === "dark";
