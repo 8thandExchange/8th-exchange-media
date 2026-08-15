@@ -1,0 +1,32 @@
+---
+description: Premium motion and animation standards for 8th & Exchange web builds
+globs: src/**/*.tsx
+alwaysApply: false
+---
+
+# Motion Design Standards
+
+Build MotionSites-quality animation natively — no paid prompt libraries.
+
+## Stack
+- **Framer Motion** — scroll reveals, hero parallax, hover states, stagger
+- **Lenis** — smooth scroll (respect `prefers-reduced-motion`)
+- **CSS** — grain overlays, gradients, Ken Burns fallback
+
+## Tokens (`src/lib/motion.ts`)
+- Easing: `cubic-bezier(0.16, 1, 0.3, 1)`
+- Stagger: 70–80ms between siblings
+- Scroll reveal: `translateY(36px)` → `0`, duration ~1.1s, `viewport.once`
+
+## Patterns
+- Hero: `useScroll` + `useTransform` for parallax image scale/Y; word-stagger headline
+- Stats: spring-animated counters on `useInView`
+- Cards: image scale on hover, description fade/slide up
+- Marquee: Framer infinite `x` animation
+- Split sections: parallax image tied to `scrollYProgress`
+
+## Components
+Reuse: `Reveal`, `HeroSection`, `TextReveal`, `AnimatedStat`, `ServiceCard`, `WorkTile`, `ParallaxSplit`, `Marquee`, `MotionButton`
+
+## Brand
+Obsidian `#07090c`, gold `#c9a84c`, cream `#f5f0e1`, Cormorant Garamond + DM Sans
