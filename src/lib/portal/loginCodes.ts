@@ -45,8 +45,19 @@ export function normalizeLoginCode(raw: string): string | null {
 /**
  * Issue and email a login code. Silently succeeds when the email matches
  * no active client (anti-enumeration) and when the rate limit is hit.
+ *
+ * Throws when the mailer is unconfigured — a client who is told to check
+ * their inbox must never be told that about an email we couldn't send.
  */
 export async function issueLoginCode(email: string): Promise<void> {
+  // Checked before the client lookup so a missing key fails identically
+  // for known and unknown emails — enumeration stays closed even when
+  // the mailer is broken.
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured — cannot email login codes");
+  }
+
   const client = await getClientByEmail(email);
   if (!client || !client.active) return;
 
@@ -69,11 +80,6 @@ export async function issueLoginCode(email: string): Promise<void> {
   });
   if (error) throw new Error(error.message);
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.error("RESEND_API_KEY missing — login code could not be emailed");
-    return;
-  }
   const resend = new Resend(apiKey);
   const from = process.env.CONTACT_FROM_EMAIL || "8th & Exchange Media <onboarding@resend.dev>";
   await resend.emails.send({
