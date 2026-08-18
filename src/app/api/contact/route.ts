@@ -1,6 +1,12 @@
 import { Resend } from "resend";
 import { formatContactEmail, validateContact } from "@/lib/contact";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { pushContactToGhl } from "@/lib/ghl";
+import {
+  clientIpFrom,
+  readMetaClickIds,
+  sendAgencyCapiEvent,
+} from "@/lib/meta/capi";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -46,5 +52,33 @@ export async function POST(request: Request) {
     return Response.json({ error: "Failed to send message. Please try again." }, { status: 500 });
   }
 
-  return Response.json({ ok: true });
+  const nameParts = data.name.trim().split(/\s+/);
+  await pushContactToGhl({
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    companyName: data.company,
+    source: "8emedia.com contact",
+    tags: ["8e-contact", ...(data.services ?? []).map((s) => `need: ${s}`)],
+    notes: [data.budget ? `Budget: ${data.budget}` : null, data.message]
+      .filter(Boolean)
+      .join("\n"),
+  }).catch((err) => console.error("GHL contact push failed", err));
+
+  const { eventId } = await sendAgencyCapiEvent({
+    eventName: "Lead",
+    eventSourceUrl: request.headers.get("referer") || `${SITE_URL}/contact`,
+    user: {
+      email: data.email,
+      phone: data.phone,
+      firstName: nameParts[0],
+      lastName: nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined,
+      clientIp: clientIpFrom(request),
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      ...readMetaClickIds(request),
+    },
+    customData: { content_name: "contact" },
+  });
+
+  return Response.json({ ok: true, eventId });
 }

@@ -8,8 +8,9 @@ import { useState, useSyncExternalStore } from "react";
  * accepts; declining stores the choice and loads nothing. Tracker ids
  * come from env (NEXT_PUBLIC_GA4_ID, NEXT_PUBLIC_META_PIXEL_ID) — with
  * neither set, the banner stays hidden entirely because there is
- * nothing to consent to. Strictly-necessary cookies (sign-in sessions)
- * don't need consent and aren't gated here.
+ * nothing to consent to. Mounted from PageShell so /invoicing, /portal,
+ * and /pay never receive marketing pixels. Strictly-necessary cookies
+ * (sign-in sessions) don't need consent and aren't gated here.
  */
 
 const STORAGE_KEY = "8e-cookie-consent"; // "granted" | "denied"

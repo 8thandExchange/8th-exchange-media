@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
+import { MetaSettingsForm } from "@/components/portal/MetaSettingsForm";
 import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
+import { getBrandMetaAccount } from "@/lib/portal/metaAccounts";
 import { getBrandKit, getClientById } from "@/lib/portal/service";
 import { getStripe } from "@/lib/stripe";
 
@@ -33,6 +35,7 @@ export default async function StaffClientDetailPage({
 
   const kit = (await getBrandKit(id)) ?? {};
   const cardOnFile = await checkCardOnFile(client.stripe_customer_id);
+  const meta = await getBrandMetaAccount(id);
 
   return (
     <div>
@@ -62,6 +65,10 @@ export default async function StaffClientDetailPage({
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>
         <GhlSettingsForm clientId={client.id} connectedLocationId={client.ghl_location_id} />
+      </div>
+
+      <div className="inv-card" style={{ marginTop: "1rem" }}>
+        <MetaSettingsForm clientId={client.id} company={client.company} initial={meta} />
       </div>
 
       <div style={{ marginTop: "1rem" }}>

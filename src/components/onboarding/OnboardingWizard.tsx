@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { trackBrowserLead } from "@/lib/meta/browser";
 
 const GOALS = [
   "More leads & sales",
@@ -118,11 +119,15 @@ export function OnboardingWizard() {
           notes,
         }),
       });
-      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        eventId?: string;
+      } | null;
       if (!response.ok) {
         setError(data?.error ?? "Something went wrong — please try again.");
         return;
       }
+      trackBrowserLead(data?.eventId);
       setDone(true);
     } catch {
       setError("Something went wrong — please try again.");

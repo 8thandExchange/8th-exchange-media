@@ -51,6 +51,23 @@ Set these environment variables in Vercel (or a local `.env.local`):
 Without `RESEND_API_KEY`, the form returns a 503 with a clear error message.
 Verify your sending domain in Resend before using a custom `CONTACT_FROM_EMAIL`.
 
+## Meta ads (Pixel + Ads desk)
+
+There is no Pixel ID until someone creates it in Meta Events Manager — this
+repo cannot issue one. After you have the ID:
+
+| Variable | Required to | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_META_PIXEL_ID` | Browser PageView | Consent-gated; public pages only |
+| `META_CAPI_ACCESS_TOKEN` | Server Lead events | Events Manager → Generate access token |
+| `NEXT_PUBLIC_META_DOMAIN_VERIFY` | Domain verification | Business settings → Domains |
+| `META_AD_ACCOUNT_ID` | Campaign list | `act_…` from Ads Manager |
+| `META_SYSTEM_USER_TOKEN` | Campaign list | System user with `ads_read` |
+
+Staff desk: `/invoicing/ads`. Per-client IDs: client page → Meta card, after
+applying `supabase/migrations/20260818_brand_meta_accounts.sql`. Map:
+`docs/OPERATING_SYSTEM.md`.
+
 **Resend is not just the contact form.** The same key sends portal sign-in codes
 (`lib/portal/loginCodes.ts`) — without it, clients cannot log in at all, and
 `CONTACT_FROM_EMAIL` doubles as the sender for those codes. Left unset, they go

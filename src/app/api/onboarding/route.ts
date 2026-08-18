@@ -1,7 +1,12 @@
 import { Resend } from "resend";
 import { pushContactToGhl } from "@/lib/ghl";
+import {
+  clientIpFrom,
+  readMetaClickIds,
+  sendAgencyCapiEvent,
+} from "@/lib/meta/capi";
 import { createLead } from "@/lib/portal/service";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 
 const MAX_SHORT = 200;
 const MAX_LONG = 5000;
@@ -125,7 +130,23 @@ export async function POST(request: Request) {
         .join("\n"),
     }).catch((err) => console.error("GHL contact push failed", err));
 
-    return Response.json({ ok: true });
+    const nameParts = contactName.split(/\s+/);
+    const { eventId } = await sendAgencyCapiEvent({
+      eventName: "Lead",
+      eventSourceUrl: request.headers.get("referer") || `${SITE_URL}/onboarding`,
+      user: {
+        email,
+        phone: lead.phone ?? undefined,
+        firstName: nameParts[0],
+        lastName: nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined,
+        clientIp: clientIpFrom(request),
+        userAgent: request.headers.get("user-agent") ?? undefined,
+        ...readMetaClickIds(request),
+      },
+      customData: { content_name: "onboarding" },
+    });
+
+    return Response.json({ ok: true, eventId });
   } catch (error) {
     console.error("Failed to store onboarding lead", error);
     return Response.json(

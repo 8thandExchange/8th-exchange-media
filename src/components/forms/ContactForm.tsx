@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { trackBrowserLead } from "@/lib/meta/browser";
 
 const BUDGETS = [
   "Select a range",
@@ -85,9 +86,10 @@ export function ContactForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const json = (await res.json()) as { error?: string };
+      const json = (await res.json()) as { error?: string; eventId?: string };
       if (!res.ok) throw new Error(json.error || "Failed to send message.");
 
+      trackBrowserLead(json.eventId);
       setStatus("success");
       form.reset();
       setSelected([]);

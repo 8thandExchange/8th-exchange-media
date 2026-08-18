@@ -53,6 +53,7 @@ Non-negotiables from the gap analysis:
 - [ ] Weekly plain-text email cadence (owned list)
 - [ ] Exit-intent variant of the Growth Map offer
 - [ ] Social Planner: EHA connected (location id + PIT token via client page) and posting cadence live for both brands
+- [ ] Meta: create 8E Pixel in Events Manager, set `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` in Vercel, confirm PageView + Lead, then first campaign (see `/invoicing/ads` and `docs/OPERATING_SYSTEM.md`)
 
 ## 4. Portfolio rollout — the assembly line
 
@@ -61,11 +62,12 @@ Every family brand goes through the same line. One brand per wave; a wave ships 
 **Per-brand checklist (the "8E treatment"):**
 1. Portal client + brand kit loaded (voice, colors, guardrails, links).
 2. Own GHL location connected via the client page (location id + PIT token — never 8E's).
-3. Universal trio first: speed-to-lead, missed-call text-back, review engine (copy adapted from the EHA/8E kits).
-4. Avatar (HALO verbatim language) → Godfather-framed entry offer → HVCO + stripped opt-in → 3-part nurture.
-5. Content cadence: 3 short-form/week from a monthly 2-hour shoot; one conversion action.
-6. Pipeline in GHL; monthly numbers logged.
-7. Paid traffic last, budgeted from that brand's LTV → max CAC.
+3. Own Meta Business Portfolio + Pixel + ad account, IDs saved on the client page (never 8E's Pixel on a client site).
+4. Universal trio first: speed-to-lead, missed-call text-back, review engine (copy adapted from the EHA/8E kits).
+5. Avatar (HALO verbatim language) → Godfather-framed entry offer → HVCO + stripped opt-in → 3-part nurture.
+6. Content cadence: 3 short-form/week from a monthly 2-hour shoot; one conversion action.
+7. Pipeline in GHL; monthly numbers logged.
+8. Paid traffic last, budgeted from that brand's LTV → max CAC.
 
 **Waves (by economics and readiness):**
 - **Wave 1 — Elevated Health Augusta** (live): recurring revenue, best LTV, the flagship case study.
