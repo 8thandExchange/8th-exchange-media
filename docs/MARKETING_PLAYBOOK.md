@@ -53,6 +53,9 @@ Non-negotiables from the gap analysis:
 - [ ] Weekly plain-text email cadence (owned list)
 - [ ] Exit-intent variant of the Growth Map offer
 - [ ] Social Planner: EHA connected (location id + PIT token via client page) and posting cadence live for both brands
+- [x] Meta Ads foundation: `/invoicing/ads` connection + pixel + paused campaigns; CAPI on contact/onboarding (2026-08-18). Staff still must create the Business Portfolio and paste a System User token — software cannot invent a Pixel ID.
+- [ ] 8E own-ads live: Growth Map campaign on, pixel verified in Events Manager
+- [ ] EHA Meta connection on the client page (their pixel, their ad account — never 8E's)
 
 ## 4. Portfolio rollout — the assembly line
 

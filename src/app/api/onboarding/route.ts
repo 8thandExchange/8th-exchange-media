@@ -1,7 +1,9 @@
 import { Resend } from "resend";
 import { pushContactToGhl } from "@/lib/ghl";
+import { clientHintsFromRequest, sendCapiEvent } from "@/lib/meta";
+import { agencyMetaAuthForCapi } from "@/lib/portal/metaAuth";
 import { createLead } from "@/lib/portal/service";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 
 const MAX_SHORT = 200;
 const MAX_LONG = 5000;
@@ -124,6 +126,26 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .join("\n"),
     }).catch((err) => console.error("GHL contact push failed", err));
+
+    const eventId =
+      typeof body.eventId === "string" && body.eventId.trim() ? body.eventId.trim() : crypto.randomUUID();
+    const eventSourceUrl =
+      typeof body.eventSourceUrl === "string" && body.eventSourceUrl.trim()
+        ? body.eventSourceUrl.trim()
+        : `${SITE_URL}/onboarding`;
+    const hints = clientHintsFromRequest(request);
+    const metaAuth = await agencyMetaAuthForCapi();
+    if (metaAuth) {
+      await sendCapiEvent(metaAuth, {
+        eventName: "Lead",
+        eventId,
+        eventSourceUrl,
+        email,
+        phone: lead.phone ?? undefined,
+        ...hints,
+        customData: { content_name: "onboarding wizard", content_category: lead.budget ?? undefined },
+      }).catch((err) => console.error("Meta CAPI Lead failed", err));
+    }
 
     return Response.json({ ok: true });
   } catch (error) {

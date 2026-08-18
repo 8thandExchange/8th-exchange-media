@@ -9,7 +9,7 @@ const SECTIONS = [
     title: "Overview",
     paragraphs: [
       "8th & Exchange Media, LLC (\"8E Media,\" \"we,\" \"us\") operates 8emedia.com and related services. This Privacy Policy explains how we collect, use, and protect information when you visit our website, contact us, or interact with our invoicing and payment tools.",
-      "Last updated: June 27, 2026.",
+      "Last updated: August 18, 2026.",
     ],
   },
   {
@@ -20,6 +20,7 @@ const SECTIONS = [
       "Communications you send to us by email or other channels.",
       "Billing and transaction data processed through Stripe when you pay an invoice or use a payment link.",
       "Basic technical data such as browser type, device information, and pages visited, collected through standard server logs and cookies required for site operation.",
+      "If you allow analytics cookies, we load Google Analytics 4 and/or the Meta Pixel to measure visits and advertising performance. Those tools may set first-party cookies and receive hashed contact details on form submit via Meta’s Conversions API. You can decline; the site still works.",
     ],
   },
   {
@@ -32,7 +33,7 @@ const SECTIONS = [
   {
     title: "Service providers",
     paragraphs: [
-      "We use trusted third-party providers to operate the site and business, including hosting (Vercel), email delivery (Resend), and payments (Stripe). These providers process data on our behalf under their own privacy terms and applicable agreements.",
+      "We use trusted third-party providers to operate the site and business, including hosting (Vercel), email delivery (Resend), payments (Stripe), and — when you allow analytics cookies — Google Analytics and Meta (Facebook/Instagram) advertising measurement. These providers process data on our behalf under their own privacy terms and applicable agreements.",
     ],
   },
   {
@@ -44,7 +45,7 @@ const SECTIONS = [
   {
     title: "Your choices",
     paragraphs: [
-      `You may request access, correction, or deletion of personal information we hold by contacting ${CONTACT_EMAIL}. You may opt out of non-essential marketing messages at any time.`,
+      `You may request access, correction, or deletion of personal information we hold by contacting ${CONTACT_EMAIL}. You may opt out of non-essential marketing messages at any time. Analytics and advertising cookies are optional: choose “No thanks” on the banner, or clear the 8e-cookie-consent key in local storage to see the banner again.`,
     ],
   },
   {

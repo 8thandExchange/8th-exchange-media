@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { NewClientForm } from "@/components/portal/NewClientForm";
 import { CHECKLIST_TOTAL, checklistProgress } from "@/lib/portal/checklist";
+import { listConnectedMetaClientIds } from "@/lib/portal/metaStore";
 import { listClients } from "@/lib/portal/service";
 
 export default async function StaffClientsPage() {
   const clients = await listClients();
+  const metaIds = new Set(await listConnectedMetaClientIds().catch(() => []));
 
   return (
     <div>
@@ -28,6 +30,7 @@ export default async function StaffClientsPage() {
                 <th>Contact</th>
                 <th>Email</th>
                 <th>GHL</th>
+                <th>Meta</th>
                 <th>Checklist</th>
               </tr>
             </thead>
@@ -46,6 +49,11 @@ export default async function StaffClientsPage() {
                     <td>
                       <span className={`inv-badge ${c.ghl_location_id ? "inv-badge-paid" : "inv-badge-open"}`}>
                         {c.ghl_location_id ? "Connected" : "Not connected"}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`inv-badge ${metaIds.has(c.id) ? "inv-badge-paid" : "inv-badge-open"}`}>
+                        {metaIds.has(c.id) ? "Connected" : "Not connected"}
                       </span>
                     </td>
                     <td>

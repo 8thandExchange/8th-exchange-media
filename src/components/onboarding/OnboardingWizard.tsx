@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { newMetaEventId, trackMetaBrowser } from "@/lib/metaBrowser";
 
 const GOALS = [
   "More leads & sales",
@@ -99,6 +100,7 @@ export function OnboardingWizard() {
     setLoading(true);
     setError("");
     try {
+      const eventId = newMetaEventId();
       const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,6 +118,8 @@ export function OnboardingWizard() {
           budget,
           timeline,
           notes,
+          eventId,
+          eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -123,6 +127,7 @@ export function OnboardingWizard() {
         setError(data?.error ?? "Something went wrong — please try again.");
         return;
       }
+      trackMetaBrowser("Lead", eventId);
       setDone(true);
     } catch {
       setError("Something went wrong — please try again.");

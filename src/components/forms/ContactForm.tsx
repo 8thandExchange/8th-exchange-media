@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { newMetaEventId, trackMetaBrowser } from "@/lib/metaBrowser";
 
 const BUDGETS = [
   "Select a range",
@@ -68,6 +69,7 @@ export function ContactForm({
       return;
     }
 
+    const eventId = newMetaEventId();
     const payload = {
       name: data.get("name"),
       company: data.get("company"),
@@ -77,6 +79,8 @@ export function ContactForm({
       services: showServiceSelect && service ? [service] : selected,
       message: data.get("message"),
       company_website: data.get("company_website"),
+      eventId,
+      eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
     };
 
     try {
@@ -88,6 +92,7 @@ export function ContactForm({
       const json = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(json.error || "Failed to send message.");
 
+      trackMetaBrowser("Contact", eventId);
       setStatus("success");
       form.reset();
       setSelected([]);

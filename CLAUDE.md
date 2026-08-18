@@ -34,9 +34,10 @@ to be slow-ish and paginated at Stripe's limits.
 
 **Supabase holds everything Stripe can't.** Tables: `portal_clients`, `portal_requests`,
 `portal_request_updates`, `portal_request_files`, `portal_login_codes`, `onboarding_leads`,
-`brand_kits`. All have RLS on with **no policies** — the service-role client in
-`lib/portal/db.ts` is the only way in, so it is server-only and must never reach the
-browser. `portal_clients.stripe_customer_id` is the single link between the two stores.
+`brand_kits`, `brand_meta_connections`. All have RLS on with **no policies** — the
+service-role client in `lib/portal/db.ts` is the only way in, so it is server-only and
+must never reach the browser. `portal_clients.stripe_customer_id` is the single link
+between the two stores.
 
 ## Go High Level
 
@@ -56,6 +57,27 @@ The Social Planner (`/invoicing/social`) is intentionally minimal: one text body
 URL, account checkboxes, draft/schedule/publish. No calendar, no approvals, no per-network
 variants, no analytics — those live in GHL's own UI. The posts table reads 30 days back and
 90 days forward, capped at 25.
+
+## Meta Ads
+
+Meta is the paid-traffic path. Organic stays in GHL; do not add a second publisher
+(Metricool, native FB scheduler, etc.). The operating map is `docs/OPERATING_SYSTEM.md`.
+
+Every staff action that touches Meta must resolve *which* brand first, via
+`resolveMetaAuth(clientId)` in `lib/portal/metaAuth.ts`:
+
+- `null` → 8E Media (agency row in `brand_meta_connections`, else `META_*` env)
+- a client id → that client's stored System User token + ad account
+
+Getting this wrong spends the wrong money on the wrong Page. Tokens are write-only.
+
+The Ads page (`/invoicing/ads`) is intentionally minimal: connection, pixel create / test
+event, campaign list, paused campaign create. Creative iteration and turning spend on
+live in Ads Manager. Campaigns created here are always `PAUSED`.
+
+The public pixel is consent-gated and **public routes only** — never `/invoicing`,
+`/portal`, or `/pay`. Conversions API fires `Contact` (inquiry) and `Lead` (onboarding)
+and must never fail a form.
 
 ## Conventions
 

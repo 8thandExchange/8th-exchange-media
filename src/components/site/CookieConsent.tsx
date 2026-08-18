@@ -1,29 +1,42 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 
 /**
  * Consent-first analytics. No tracking script loads until the visitor
  * accepts; declining stores the choice and loads nothing. Tracker ids
- * come from env (NEXT_PUBLIC_GA4_ID, NEXT_PUBLIC_META_PIXEL_ID) — with
- * neither set, the banner stays hidden entirely because there is
- * nothing to consent to. Strictly-necessary cookies (sign-in sessions)
- * don't need consent and aren't gated here.
+ * come from the agency Meta row (layout) or env. With neither set, the
+ * banner stays hidden. Staff/portal/pay routes never load trackers —
+ * those pageviews must not enter a prospect retargeting audience.
  */
 
 const STORAGE_KEY = "8e-cookie-consent"; // "granted" | "denied"
 
-const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
-const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-const HAS_TRACKERS = Boolean(GA4_ID || PIXEL_ID);
+const ENV_GA4 = process.env.NEXT_PUBLIC_GA4_ID;
+const ENV_PIXEL = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 function subscribeToStorage(callback: () => void) {
   window.addEventListener("storage", callback);
   return () => window.removeEventListener("storage", callback);
 }
 
-export function CookieConsent() {
+function isPrivatePath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/invoicing") ||
+    pathname.startsWith("/portal") ||
+    pathname.startsWith("/pay")
+  );
+}
+
+export function CookieConsent({
+  pixelId,
+  ga4Id,
+}: {
+  pixelId?: string | null;
+  ga4Id?: string | null;
+} = {}) {
   // Stored value hydrates via useSyncExternalStore (server snapshot =
   // "loading" so SSR renders nothing); same-tab decisions override it.
   const stored = useSyncExternalStore(
@@ -31,11 +44,17 @@ export function CookieConsent() {
     () => window.localStorage.getItem(STORAGE_KEY) ?? "unset",
     () => "loading"
   );
+  const pathname = usePathname();
   const [override, setOverride] = useState<"granted" | "denied" | null>(null);
   const choice =
     override ?? (stored === "granted" || stored === "denied" ? stored : stored);
+  const GA4_ID = ga4Id || ENV_GA4;
+  const PIXEL_ID = pixelId || ENV_PIXEL;
+  const HAS_TRACKERS = Boolean(GA4_ID || PIXEL_ID);
 
-  if (!HAS_TRACKERS || choice === "loading" || choice === "denied") return null;
+  if (isPrivatePath(pathname) || !HAS_TRACKERS || choice === "loading" || choice === "denied") {
+    return null;
+  }
 
   if (choice === "granted") {
     return (
