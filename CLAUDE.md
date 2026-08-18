@@ -17,7 +17,7 @@ data stores, and different audiences.
 | Route | Who | Auth | Data lives in |
 | --- | --- | --- | --- |
 | `/`, `/services`, `/work`, `/about`, `/contact`, `/print`, `/growth-map`, `/onboarding` | Public | none | Hardcoded in `src/lib/` |
-| `/invoicing/*` | 8E staff | Shared password → `8e_invoicing_session` cookie | Stripe + Supabase |
+| `/invoicing/*` | 8E staff | Shared password → `8e_invoicing_session` cookie | Stripe + Supabase + GHL + Meta |
 | `/portal/*` | Clients | Emailed 6-digit code → `8e_portal_session` cookie | Supabase |
 
 `src/middleware.ts` gates both private trees on cookie presence only. **The cookie is not
@@ -37,6 +37,9 @@ to be slow-ish and paginated at Stripe's limits.
 `brand_kits`. All have RLS on with **no policies** — the service-role client in
 `lib/portal/db.ts` is the only way in, so it is server-only and must never reach the
 browser. `portal_clients.stripe_customer_id` is the single link between the two stores.
+Client Meta tokens (`meta_access_token` and friends) live on `portal_clients` the same
+way GHL tokens do — apply `supabase/migrations/20260818_portal_clients_meta.sql` before
+connecting a client ad account.
 
 ## Go High Level
 
@@ -56,6 +59,27 @@ The Social Planner (`/invoicing/social`) is intentionally minimal: one text body
 URL, account checkboxes, draft/schedule/publish. No calendar, no approvals, no per-network
 variants, no analytics — those live in GHL's own UI. The posts table reads 30 days back and
 90 days forward, capped at 25.
+
+## Meta Ads
+
+Meta is the paid-media remote control (`lib/meta.ts`). Meta owns Ads Manager, billing, and
+review; this app verifies the connection, creates a Pixel, lists campaigns, and opens a
+**paused** campaign. It will not turn spend on.
+
+Every staff action that touches Meta must resolve *which* ad account first, via
+`resolveMetaAuth(clientId)` in `lib/portal/metaAuth.ts`:
+
+- `null` → the agency's own account, from `META_ACCESS_TOKEN` / `META_AD_ACCOUNT_ID`
+- a client id → that client's stored ad account id + system-user token
+
+Getting this wrong spends a client's budget on 8E's ads, or vice versa. Same sharp edge as GHL.
+
+The Ads page (`/invoicing/ads`) degrades when Meta is unreachable or unconfigured — the rest
+of the studio still loads. There is no Pixel id until someone creates it in Meta (the Ads
+page can do that once the token is set). `NEXT_PUBLIC_META_PIXEL_ID` then has to be added
+in Vercel and redeployed before 8emedia.com sends consent-gated PageView + CAPI events.
+
+Runbook: `docs/META_ADS.md`. Why this is the first OS slice: `docs/AGENCY_OPERATING_SYSTEM.md`.
 
 ## Conventions
 

@@ -78,12 +78,12 @@ export const ONBOARDING_CHECKLIST: ChecklistGroup[] = [
       {
         key: "meta-pixel-dataset",
         label: "Meta Pixel / Dataset installed on the site",
-        help: "Events Manager — base code plus the primary conversion event. Needed before any retargeting audience can build.",
+        help: "Events Manager — or create it from Studio → Ads once the ad account is connected. Base code plus the primary conversion event. Needed before any retargeting audience can build.",
       },
       {
         key: "meta-ads-account",
         label: "Meta Ads account + payment method",
-        help: "Inside the Business Portfolio; assign 8E partner access rather than sharing logins.",
+        help: "Inside the Business Portfolio; assign 8E partner access rather than sharing logins. Paste the ad account id + system-user token on this client page so Studio → Ads can operate it.",
       },
       {
         key: "meta-domain-verification",

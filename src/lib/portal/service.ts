@@ -1,4 +1,5 @@
 import { getPortalDb } from "@/lib/portal/db";
+import { normalizeAdAccountId, type MetaAuth } from "@/lib/meta";
 import type { ChecklistState } from "@/lib/portal/checklist";
 
 export type RequestStatus = "new" | "in_progress" | "in_review" | "delivered" | "closed";
@@ -209,6 +210,125 @@ export async function setClientGhl(
     .from("portal_clients")
     .update({ ghl_location_id: locationId, ghl_api_token: apiToken })
     .eq("id", clientId);
+  throwIfError(error);
+}
+
+/* ── Client Meta ad accounts ─────────────────────── */
+
+export interface ClientMetaConnection {
+  pixelId: string | null;
+  adAccountId: string | null;
+  businessId: string | null;
+  hasToken: boolean;
+}
+
+function isMissingMetaColumnError(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42703" ||
+    message.includes("does not exist") ||
+    message.includes("meta_pixel_id") ||
+    message.includes("meta_ad_account_id") ||
+    message.includes("meta_access_token")
+  );
+}
+
+/**
+ * Public (staff-safe) Meta connection status. Never includes the token.
+ * Returns null when the row is missing, or when the migration hasn't run.
+ */
+export async function getClientMetaConnection(
+  clientId: string
+): Promise<ClientMetaConnection | null> {
+  const { data, error } = await getPortalDb()
+    .from("portal_clients")
+    .select("meta_pixel_id, meta_ad_account_id, meta_business_id, meta_access_token")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (isMissingMetaColumnError(error)) return null;
+  throwIfError(error);
+  if (!data) return null;
+  return {
+    pixelId: data.meta_pixel_id ?? null,
+    adAccountId: data.meta_ad_account_id ?? null,
+    businessId: data.meta_business_id ?? null,
+    hasToken: Boolean(data.meta_access_token),
+  };
+}
+
+/** Server-only credentials. Null when the client has no Meta connection. */
+export async function getClientMetaAuth(clientId: string): Promise<MetaAuth | null> {
+  const { data, error } = await getPortalDb()
+    .from("portal_clients")
+    .select("meta_pixel_id, meta_ad_account_id, meta_access_token, meta_business_id")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (isMissingMetaColumnError(error)) return null;
+  throwIfError(error);
+  if (!data?.meta_ad_account_id || !data.meta_access_token) return null;
+  return {
+    accessToken: data.meta_access_token,
+    adAccountId: normalizeAdAccountId(data.meta_ad_account_id),
+    pixelId: data.meta_pixel_id ?? null,
+    businessId: data.meta_business_id ?? null,
+  };
+}
+
+export async function listClientsMetaStatus(): Promise<
+  { id: string; company: string; active: boolean; connected: boolean; pixelId: string | null }[]
+> {
+  const { data, error } = await getPortalDb()
+    .from("portal_clients")
+    .select("id, company, active, meta_ad_account_id, meta_access_token, meta_pixel_id")
+    .order("company");
+  if (isMissingMetaColumnError(error)) return [];
+  throwIfError(error);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    company: row.company,
+    active: row.active,
+    connected: Boolean(row.meta_ad_account_id && row.meta_access_token),
+    pixelId: row.meta_pixel_id ?? null,
+  }));
+}
+
+/** Set or clear a client's Meta ads credentials. Token is write-only. */
+export async function setClientMeta(
+  clientId: string,
+  fields: {
+    adAccountId: string | null;
+    accessToken: string | null;
+    pixelId?: string | null;
+    businessId?: string | null;
+  }
+): Promise<void> {
+  const update: Record<string, unknown> = {
+    meta_ad_account_id: fields.adAccountId,
+    meta_access_token: fields.accessToken,
+  };
+  if (fields.pixelId !== undefined) update.meta_pixel_id = fields.pixelId;
+  if (fields.businessId !== undefined) update.meta_business_id = fields.businessId;
+
+  const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
+  if (isMissingMetaColumnError(error)) {
+    throw new Error(
+      "The Meta columns are not on portal_clients yet. Run supabase/migrations/20260818_portal_clients_meta.sql in the 8th-exchange-media Supabase project (SQL editor or `supabase db push`), then try again."
+    );
+  }
+  throwIfError(error);
+}
+
+export async function setClientMetaPixel(clientId: string, pixelId: string | null): Promise<void> {
+  const { error } = await getPortalDb()
+    .from("portal_clients")
+    .update({ meta_pixel_id: pixelId })
+    .eq("id", clientId);
+  if (isMissingMetaColumnError(error)) {
+    throw new Error(
+      "The Meta columns are not on portal_clients yet. Run supabase/migrations/20260818_portal_clients_meta.sql in the 8th-exchange-media Supabase project, then try again."
+    );
+  }
   throwIfError(error);
 }
 

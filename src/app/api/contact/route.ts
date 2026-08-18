@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { formatContactEmail, validateContact } from "@/lib/contact";
+import { sendCapiEvent } from "@/lib/meta";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 export async function POST(request: Request) {
@@ -45,6 +46,18 @@ export async function POST(request: Request) {
     console.error("Resend error:", error);
     return Response.json({ error: "Failed to send message. Please try again." }, { status: 500 });
   }
+
+  const forwarded = request.headers.get("x-forwarded-for");
+  await sendCapiEvent({
+    eventName: "Contact",
+    eventSourceUrl: "https://8emedia.com/contact",
+    user: {
+      email: data.email,
+      phone: data.phone,
+      clientIpAddress: forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip"),
+      clientUserAgent: request.headers.get("user-agent"),
+    },
+  }).catch((err) => console.error("Meta CAPI Contact failed", err));
 
   return Response.json({ ok: true });
 }

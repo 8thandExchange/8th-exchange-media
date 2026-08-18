@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { pushContactToGhl } from "@/lib/ghl";
+import { sendCapiEvent } from "@/lib/meta";
 import { createLead } from "@/lib/portal/service";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -107,6 +108,18 @@ export async function POST(request: Request) {
     // Must be awaited: Vercel freezes the function once the response is
     // sent, so an un-awaited call would never execute. Failures are still
     // swallowed so a GHL outage can't break onboarding.
+    const forwarded = request.headers.get("x-forwarded-for");
+    await sendCapiEvent({
+      eventName: "Lead",
+      eventSourceUrl: "https://8emedia.com/onboarding",
+      user: {
+        email,
+        phone: lead.phone ?? undefined,
+        clientIpAddress: forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip"),
+        clientUserAgent: request.headers.get("user-agent"),
+      },
+    }).catch((err) => console.error("Meta CAPI Lead failed", err));
+
     await pushContactToGhl({
       name: contactName,
       email,

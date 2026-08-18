@@ -53,6 +53,9 @@ Non-negotiables from the gap analysis:
 - [ ] Weekly plain-text email cadence (owned list)
 - [ ] Exit-intent variant of the Growth Map offer
 - [ ] Social Planner: EHA connected (location id + PIT token via client page) and posting cadence live for both brands
+- [x] Meta control plane in the studio (`/invoicing/ads`) — Pixel create, CAPI, paused campaigns, per-client tokens
+- [ ] Owner: create 8E Business Portfolio + ad account + system user; set `META_*` env; create Pixel; set `NEXT_PUBLIC_META_PIXEL_ID`; apply `supabase/migrations/20260818_portal_clients_meta.sql`
+- [ ] First 8E Meta campaign (paused in studio, turned on in Ads Manager) pointed at Growth Map — only after the offer converts organically enough to trust the landing page
 
 ## 4. Portfolio rollout — the assembly line
 

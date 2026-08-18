@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 
 /**
@@ -10,9 +11,14 @@ import { useState, useSyncExternalStore } from "react";
  * neither set, the banner stays hidden entirely because there is
  * nothing to consent to. Strictly-necessary cookies (sign-in sessions)
  * don't need consent and aren't gated here.
+ *
+ * Staff, portal, and payment routes never load trackers — audiences
+ * must be built from public marketing pages only.
  */
 
 const STORAGE_KEY = "8e-cookie-consent"; // "granted" | "denied"
+const CONSENT_COOKIE = "8e_cookie_consent";
+const PRIVATE_PREFIXES = ["/invoicing", "/portal", "/pay"];
 
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -23,7 +29,15 @@ function subscribeToStorage(callback: () => void) {
   return () => window.removeEventListener("storage", callback);
 }
 
+function persistConsent(value: "granted" | "denied") {
+  window.localStorage.setItem(STORAGE_KEY, value);
+  document.cookie = `${CONSENT_COOKIE}=${value}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+}
+
 export function CookieConsent() {
+  const pathname = usePathname();
+  const isPrivate = PRIVATE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
   // Stored value hydrates via useSyncExternalStore (server snapshot =
   // "loading" so SSR renders nothing); same-tab decisions override it.
   const stored = useSyncExternalStore(
@@ -35,7 +49,7 @@ export function CookieConsent() {
   const choice =
     override ?? (stored === "granted" || stored === "denied" ? stored : stored);
 
-  if (!HAS_TRACKERS || choice === "loading" || choice === "denied") return null;
+  if (isPrivate || !HAS_TRACKERS || choice === "loading" || choice === "denied") return null;
 
   if (choice === "granted") {
     return (
@@ -61,8 +75,26 @@ export function CookieConsent() {
               n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
               t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
               document,'script','https://connect.facebook.net/en_US/fbevents.js');
+              var eid = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
               fbq('init', '${PIXEL_ID}');
-              fbq('track', 'PageView');`}
+              fbq('track', 'PageView', {}, { eventID: eid });
+              try {
+                var cookies = document.cookie.split(';').map(function (c) { return c.trim(); });
+                var fbp = (cookies.find(function (c) { return c.indexOf('_fbp=') === 0; }) || '').slice(5);
+                var fbc = (cookies.find(function (c) { return c.indexOf('_fbc=') === 0; }) || '').slice(5);
+                fetch('/api/meta/capi', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  keepalive: true,
+                  body: JSON.stringify({
+                    eventName: 'PageView',
+                    eventId: eid,
+                    eventSourceUrl: location.href,
+                    fbp: fbp || undefined,
+                    fbc: fbc || undefined
+                  })
+                }).catch(function () {});
+              } catch (e) {}`}
           </Script>
         ) : null}
       </>
@@ -70,7 +102,7 @@ export function CookieConsent() {
   }
 
   const decide = (value: "granted" | "denied") => {
-    window.localStorage.setItem(STORAGE_KEY, value);
+    persistConsent(value);
     setOverride(value);
   };
 

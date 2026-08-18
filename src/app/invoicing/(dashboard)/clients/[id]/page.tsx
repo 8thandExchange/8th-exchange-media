@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
+import { MetaSettingsForm } from "@/components/portal/MetaSettingsForm";
 import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
-import { getBrandKit, getClientById } from "@/lib/portal/service";
+import { getBrandKit, getClientById, getClientMetaConnection } from "@/lib/portal/service";
 import { getStripe } from "@/lib/stripe";
 
 /** Card-on-file check; null when Stripe is unreachable (page still renders). */
@@ -33,6 +34,12 @@ export default async function StaffClientDetailPage({
 
   const kit = (await getBrandKit(id)) ?? {};
   const cardOnFile = await checkCardOnFile(client.stripe_customer_id);
+  let metaConnection = null;
+  try {
+    metaConnection = await getClientMetaConnection(id);
+  } catch (error) {
+    console.error("Client Meta connection lookup failed", error);
+  }
 
   return (
     <div>
@@ -62,6 +69,10 @@ export default async function StaffClientDetailPage({
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>
         <GhlSettingsForm clientId={client.id} connectedLocationId={client.ghl_location_id} />
+      </div>
+
+      <div className="inv-card" style={{ marginTop: "1rem" }}>
+        <MetaSettingsForm clientId={client.id} connection={metaConnection} />
       </div>
 
       <div style={{ marginTop: "1rem" }}>

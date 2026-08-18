@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Suspense } from "react";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -46,6 +47,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFY
+    ? { other: { "facebook-domain-verification": process.env.NEXT_PUBLIC_META_DOMAIN_VERIFY } }
+    : {}),
 };
 
 export default function RootLayout({
@@ -57,7 +61,9 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${hanken.variable} h-full`}>
       <body className="min-h-full page-enter">
         <MotionProvider>{children}</MotionProvider>
-        <CookieConsent />
+        <Suspense fallback={null}>
+          <CookieConsent />
+        </Suspense>
       </body>
     </html>
   );
