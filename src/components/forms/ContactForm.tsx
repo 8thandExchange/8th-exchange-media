@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { newMetaEventId, trackMetaLead } from "@/lib/ads/browser";
 import { Button } from "@/components/ui/Button";
 
 const BUDGETS = [
@@ -68,6 +69,7 @@ export function ContactForm({
       return;
     }
 
+    const eventId = newMetaEventId();
     const payload = {
       name: data.get("name"),
       company: data.get("company"),
@@ -77,6 +79,7 @@ export function ContactForm({
       services: showServiceSelect && service ? [service] : selected,
       message: data.get("message"),
       company_website: data.get("company_website"),
+      eventId,
     };
 
     try {
@@ -88,6 +91,7 @@ export function ContactForm({
       const json = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(json.error || "Failed to send message.");
 
+      trackMetaLead(eventId, { content_name: "Contact form" });
       setStatus("success");
       form.reset();
       setSelected([]);

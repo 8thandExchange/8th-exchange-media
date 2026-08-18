@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { newMetaEventId, trackMetaLead } from "@/lib/ads/browser";
 import { Button } from "@/components/ui/Button";
 
 const GOALS = [
@@ -99,6 +100,7 @@ export function OnboardingWizard() {
     setLoading(true);
     setError("");
     try {
+      const eventId = newMetaEventId();
       const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,6 +118,7 @@ export function OnboardingWizard() {
           budget,
           timeline,
           notes,
+          eventId,
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -123,6 +126,7 @@ export function OnboardingWizard() {
         setError(data?.error ?? "Something went wrong — please try again.");
         return;
       }
+      trackMetaLead(eventId, { content_name: "Onboarding wizard" });
       setDone(true);
     } catch {
       setError("Something went wrong — please try again.");

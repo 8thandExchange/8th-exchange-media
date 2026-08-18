@@ -46,6 +46,15 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION
+    ? {
+        verification: {
+          other: {
+            "facebook-domain-verification": process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION,
+          },
+        },
+      }
+    : {}),
 };
 
 export default function RootLayout({

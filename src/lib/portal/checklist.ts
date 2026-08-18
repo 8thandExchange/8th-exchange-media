@@ -78,7 +78,7 @@ export const ONBOARDING_CHECKLIST: ChecklistGroup[] = [
       {
         key: "meta-pixel-dataset",
         label: "Meta Pixel / Dataset installed on the site",
-        help: "Events Manager — base code plus the primary conversion event. Needed before any retargeting audience can build.",
+        help: "Events Manager — Dataset ID + Conversions API token. Save the IDs on this client page (Meta card) and install the Pixel on THEIR site, never on 8emedia.com. Staff walkthrough: /invoicing/ads.",
       },
       {
         key: "meta-ads-account",

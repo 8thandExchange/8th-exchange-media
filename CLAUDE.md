@@ -34,7 +34,7 @@ to be slow-ish and paginated at Stripe's limits.
 
 **Supabase holds everything Stripe can't.** Tables: `portal_clients`, `portal_requests`,
 `portal_request_updates`, `portal_request_files`, `portal_login_codes`, `onboarding_leads`,
-`brand_kits`. All have RLS on with **no policies** — the service-role client in
+`brand_kits`, `brand_ads_connections`. All have RLS on with **no policies** — the service-role client in
 `lib/portal/db.ts` is the only way in, so it is server-only and must never reach the
 browser. `portal_clients.stripe_customer_id` is the single link between the two stores.
 
@@ -56,6 +56,16 @@ The Social Planner (`/invoicing/social`) is intentionally minimal: one text body
 URL, account checkboxes, draft/schedule/publish. No calendar, no approvals, no per-network
 variants, no analytics — those live in GHL's own UI. The posts table reads 30 days back and
 90 days forward, capped at 25.
+
+## Meta ads
+
+The Ads workspace (`/invoicing/ads`) is measurement-first. Agency Pixel + Conversions API
+live in env (`NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID`).
+Client Pixel / ad-account IDs live in `brand_ads_connections` and are edited on the client
+page — never inject a client's Pixel onto 8emedia.com. Contact and onboarding fire a `Lead`
+through CAPI (and the browser Pixel when consent has been granted), deduped by `event_id`.
+Campaign create/spend stays in Ads Manager until a reviewed Meta app + System User exists.
+A failing Meta call must never take down a form or a staff page.
 
 ## Conventions
 

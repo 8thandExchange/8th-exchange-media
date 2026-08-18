@@ -9,7 +9,7 @@ const SECTIONS = [
     title: "Overview",
     paragraphs: [
       "8th & Exchange Media, LLC (\"8E Media,\" \"we,\" \"us\") operates 8emedia.com and related services. This Privacy Policy explains how we collect, use, and protect information when you visit our website, contact us, or interact with our invoicing and payment tools.",
-      "Last updated: June 27, 2026.",
+      "Last updated: August 18, 2026.",
     ],
   },
   {
@@ -19,7 +19,8 @@ const SECTIONS = [
       "Contact details you submit through our inquiry form (name, email, phone, company, project details).",
       "Communications you send to us by email or other channels.",
       "Billing and transaction data processed through Stripe when you pay an invoice or use a payment link.",
-      "Basic technical data such as browser type, device information, and pages visited, collected through standard server logs and cookies required for site operation.",
+      "Basic technical data such as browser type, device information, and pages visited, collected through standard server logs and, if you allow analytics cookies, through Google Analytics 4 and the Meta (Facebook) Pixel.",
+      "When you submit a contact or onboarding form, we may send a hashed conversion event (email and phone, one-way hashed) to Meta's Conversions API so we can measure whether ads led to an inquiry. That event is a form submission, not a tracking cookie.",
     ],
   },
   {
@@ -32,7 +33,7 @@ const SECTIONS = [
   {
     title: "Service providers",
     paragraphs: [
-      "We use trusted third-party providers to operate the site and business, including hosting (Vercel), email delivery (Resend), and payments (Stripe). These providers process data on our behalf under their own privacy terms and applicable agreements.",
+      "We use trusted third-party providers to operate the site and business, including hosting (Vercel), email delivery (Resend), payments (Stripe), and — when you allow analytics or submit a form — measurement with Google and Meta Platforms. These providers process data on our behalf under their own privacy terms and applicable agreements.",
     ],
   },
   {
@@ -44,7 +45,7 @@ const SECTIONS = [
   {
     title: "Your choices",
     paragraphs: [
-      `You may request access, correction, or deletion of personal information we hold by contacting ${CONTACT_EMAIL}. You may opt out of non-essential marketing messages at any time.`,
+      `You may request access, correction, or deletion of personal information we hold by contacting ${CONTACT_EMAIL}. You may opt out of non-essential marketing messages at any time. Analytics cookies load only after you click Allow analytics on the cookie banner; declining leaves the site fully usable.`,
     ],
   },
   {

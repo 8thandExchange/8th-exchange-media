@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { formatContactEmail, validateContact } from "@/lib/contact";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { captureAgencyLead, readClientEventId } from "@/lib/meta";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -46,5 +47,16 @@ export async function POST(request: Request) {
     return Response.json({ error: "Failed to send message. Please try again." }, { status: 500 });
   }
 
-  return Response.json({ ok: true });
+  const eventId = readClientEventId(body);
+  await captureAgencyLead({
+    eventId,
+    sourceUrl: `${SITE_URL}/contact`,
+    email: data.email,
+    phone: data.phone,
+    name: data.name,
+    request,
+    contentName: "Contact form",
+  });
+
+  return Response.json({ ok: true, eventId });
 }
