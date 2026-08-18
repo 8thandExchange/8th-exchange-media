@@ -53,8 +53,15 @@ function mapRow(row: {
 }
 
 function toPublic(row: MetaConnectionRow): MetaConnectionPublic {
-  const { accessToken: _token, ...rest } = row;
-  return rest;
+  return {
+    clientId: row.clientId,
+    pixelId: row.pixelId,
+    adAccountId: row.adAccountId,
+    businessId: row.businessId,
+    pageId: row.pageId,
+    domainVerification: row.domainVerification,
+    hasToken: row.hasToken,
+  };
 }
 
 export async function getMetaConnection(clientId: string | null): Promise<MetaConnectionRow | null> {

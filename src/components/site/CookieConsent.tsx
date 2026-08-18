@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 /**
  * Consent-first analytics. No tracking script loads until the visitor
@@ -46,11 +46,29 @@ export function CookieConsent({
   );
   const pathname = usePathname();
   const [override, setOverride] = useState<"granted" | "denied" | null>(null);
+  const [remote, setRemote] = useState<{ pixelId: string; ga4Id: string } | null>(null);
   const choice =
     override ?? (stored === "granted" || stored === "denied" ? stored : stored);
-  const GA4_ID = ga4Id || ENV_GA4;
-  const PIXEL_ID = pixelId || ENV_PIXEL;
+  const GA4_ID = remote?.ga4Id || ga4Id || ENV_GA4;
+  const PIXEL_ID = remote?.pixelId || pixelId || ENV_PIXEL;
   const HAS_TRACKERS = Boolean(GA4_ID || PIXEL_ID);
+
+  useEffect(() => {
+    if (isPrivatePath(pathname)) return;
+    let cancelled = false;
+    fetch("/api/public/trackers")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { pixelId?: string; ga4Id?: string } | null) => {
+        if (cancelled || !data) return;
+        setRemote({ pixelId: data.pixelId ?? "", ga4Id: data.ga4Id ?? "" });
+      })
+      .catch(() => {
+        /* banner stays hidden — same as no trackers configured */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   if (isPrivatePath(pathname) || !HAS_TRACKERS || choice === "loading" || choice === "denied") {
     return null;

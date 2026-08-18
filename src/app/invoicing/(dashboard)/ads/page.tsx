@@ -49,7 +49,7 @@ export default async function StaffAdsPage({
     brandLabel = label;
     pixelId = auth.pixelId ?? pixelId;
     resolved = true;
-    [{ campaigns }, pixels] = await Promise.all([listCampaigns(auth), listPixels(auth)]);
+    [campaigns, pixels] = await Promise.all([listCampaigns(auth), listPixels(auth)]);
   } catch (error) {
     metaError = error instanceof Error ? error.message : "Could not reach Meta";
     if (selectedClient) brandLabel = selectedClient.company;
