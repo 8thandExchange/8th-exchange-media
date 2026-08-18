@@ -51,6 +51,11 @@ Set these environment variables in Vercel (or a local `.env.local`):
 Without `RESEND_API_KEY`, the form returns a 503 with a clear error message.
 Verify your sending domain in Resend before using a custom `CONTACT_FROM_EMAIL`.
 
+**Resend is not just the contact form.** The same key sends portal sign-in codes
+(`lib/portal/loginCodes.ts`) — without it, clients cannot log in at all, and
+`CONTACT_FROM_EMAIL` doubles as the sender for those codes. Left unset, they go
+out from `onboarding@resend.dev` and tend to land in spam.
+
 ## Signature details
 
 - Animated **8E monogram** that draws itself (`components/brand/Monogram.tsx`)
@@ -87,7 +92,28 @@ Legacy URL `media.8thandexchange.com` redirects to `8emedia.com`.
 
 ### DNS
 
-Nameservers are managed by Vercel (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`). No further DNS changes needed.
+The domain is **registered at Hostinger**; its nameservers are delegated to
+Vercel (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`). So DNS *records* are managed
+in the Vercel dashboard, but the *nameservers* themselves are only changeable in
+Hostinger's hPanel — Vercel cannot fix a broken delegation on its own.
+
+If `8emedia.com` starts serving a "Parked Domain name on Hostinger DNS system"
+page, the delegation has been reset. Confirm with:
+
+```bash
+dig +short 8emedia.com NS        # expect ns1/ns2.vercel-dns.com
+npx vercel domains inspect 8emedia.com
+```
+
+Repoint it in hPanel → Domains → 8emedia.com → DNS / Nameservers → custom
+nameservers. Propagation takes 15–60 minutes, and Vercel reissues the
+certificate on its own. Local DNS caching will keep showing the old answer well
+after it is fixed — verify with `curl --resolve` against a Vercel IP rather than
+trusting the browser.
+
+`8emedia.com` carries no MX or TXT records: company mail runs on
+`8thandexchange.com`, a separate domain still on Hostinger's own nameservers.
+Changing this domain's DNS does not touch email.
 
 ## Brand
 
