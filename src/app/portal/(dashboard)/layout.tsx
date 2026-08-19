@@ -37,6 +37,9 @@ export default async function PortalDashboardLayout({
             <Link href="/portal" className="nav-link">
               Requests
             </Link>
+            <Link href="/portal/approvals" className="nav-link">
+              Approvals
+            </Link>
             <Link href="/portal/brand" className="nav-link">
               Brand Kit
             </Link>

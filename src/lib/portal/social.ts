@@ -85,37 +85,25 @@ export async function syncSocialAccounts(
   const { accounts } = await listSocialAccounts(auth);
   const seen = new Set(accounts.map((a) => a.id));
 
+  // The unique index is expression-based (coalesce over the nullable
+  // client_id), which upsert can't target — replace each row instead.
   for (const account of accounts) {
-    const { error } = await db.from("portal_social_accounts").upsert(
-      {
-        client_id: clientId,
-        ghl_account_id: account.id,
-        platform: account.platform ?? "unknown",
-        name: account.name ?? null,
-        avatar: account.avatar ?? null,
-        status: "connected",
-        last_synced_at: new Date().toISOString(),
-      },
-      { onConflict: "client_id,ghl_account_id", ignoreDuplicates: false }
-    );
-    // The coalesce-based unique index can't be named in onConflict for
-    // null client_id — fall back to delete+insert for the agency rows.
-    if (error) {
-      await db
-        .from("portal_social_accounts")
-        .delete()
-        .is("client_id", clientId)
-        .eq("ghl_account_id", account.id);
-      const { error: insertError } = await db.from("portal_social_accounts").insert({
-        client_id: clientId,
-        ghl_account_id: account.id,
-        platform: account.platform ?? "unknown",
-        name: account.name ?? null,
-        avatar: account.avatar ?? null,
-        status: "connected",
-      });
-      throwIfError(insertError);
-    }
+    const deletion = db
+      .from("portal_social_accounts")
+      .delete()
+      .eq("ghl_account_id", account.id);
+    await (clientId === null
+      ? deletion.is("client_id", null)
+      : deletion.eq("client_id", clientId));
+    const { error } = await db.from("portal_social_accounts").insert({
+      client_id: clientId,
+      ghl_account_id: account.id,
+      platform: account.platform ?? "unknown",
+      name: account.name ?? null,
+      avatar: account.avatar ?? null,
+      status: "connected",
+    });
+    throwIfError(error);
   }
 
   const stale = (await listAccountRegistry(clientId)).filter(

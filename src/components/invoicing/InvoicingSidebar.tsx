@@ -15,7 +15,8 @@ const NAV_GROUPS: { section: string; items: { href: string; label: string; exact
     section: "Studio",
     items: [
       { href: "/invoicing", label: "Overview", exact: true },
-      { href: "/invoicing/social", label: "Social Planner" },
+      { href: "/invoicing/social", label: "Social Planner", exact: true },
+      { href: "/invoicing/social/pipeline", label: "Content Pipeline" },
     ],
   },
   {
