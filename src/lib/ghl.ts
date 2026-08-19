@@ -213,8 +213,18 @@ export async function createSocialPost(input: {
   return response.json();
 }
 
-export async function listSocialPosts(auth?: GhlAuth): Promise<GhlSocialPost[]> {
-  const { token, locationId } = requireGhlAuth(auth);
+export async function listSocialPosts(
+  auth?: GhlAuth,
+  accountIds?: string[]
+): Promise<GhlSocialPost[]> {
+  const config = requireGhlAuth(auth);
+  const { token, locationId } = config;
+
+  // GHL rejects an empty accounts filter (422), so the connected account
+  // ids are required. No connected accounts means no posts to list.
+  const accounts =
+    accountIds ?? (await listSocialAccounts(config)).accounts.map((a) => a.id);
+  if (accounts.length === 0) return [];
 
   const now = Date.now();
   const response = await fetch(
@@ -224,7 +234,7 @@ export async function listSocialPosts(auth?: GhlAuth): Promise<GhlSocialPost[]> 
       headers: ghlHeaders(token),
       body: JSON.stringify({
         type: "all",
-        accounts: "",
+        accounts: accounts.join(","),
         skip: "0",
         limit: "25",
         fromDate: new Date(now - 30 * 24 * 3600 * 1000).toISOString(),

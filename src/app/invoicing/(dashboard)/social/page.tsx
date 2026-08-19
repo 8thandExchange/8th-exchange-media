@@ -45,10 +45,8 @@ export default async function StaffSocialPage({
   try {
     const { auth, label } = await resolveGhlAuth(selectedClientId);
     brandLabel = label;
-    [{ accounts }, posts] = await Promise.all([
-      listSocialAccounts(auth),
-      listSocialPosts(auth),
-    ]);
+    ({ accounts } = await listSocialAccounts(auth));
+    posts = await listSocialPosts(auth, accounts.map((a) => a.id));
   } catch (error) {
     ghlError = error instanceof Error ? error.message : "Could not reach Go High Level";
     if (selectedClient) brandLabel = selectedClient.company;
