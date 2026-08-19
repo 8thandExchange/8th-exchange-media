@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Fraunces, Hanken_Grotesk, Inter } from "next/font/google";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { CookieConsent } from "@/components/site/CookieConsent";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -16,6 +16,11 @@ const hanken = Hanken_Grotesk({
   variable: "--font-hanken",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -54,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${hanken.variable} h-full`}>
+    <html lang="en" className={`${fraunces.variable} ${hanken.variable} ${inter.variable} h-full`}>
       <body className="min-h-full page-enter">
         <MotionProvider>{children}</MotionProvider>
         <CookieConsent />
