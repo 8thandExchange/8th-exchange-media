@@ -30,49 +30,57 @@ export default async function ApprovalsPage() {
       .join(", ");
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-10">
-        <p className="eyebrow eyebrow-on-light mb-2">Approvals</p>
-        <h1 className="font-display text-3xl text-navy">Posts awaiting your OK</h1>
-        <p className="mt-2 text-sm text-ink/60">
-          Nothing publishes to your social accounts until you approve it here.
-        </p>
+    <div>
+      <div className="inv-page-header">
+        <div>
+          <h1 className="inv-page-title">Approvals</h1>
+          <p className="inv-page-subtitle">
+            Nothing publishes to your social accounts until you approve it here.
+          </p>
+        </div>
       </div>
 
       {pending.length === 0 ? (
-        <div className="border-hairline bg-paper p-10 text-center">
-          <p className="font-display text-xl text-navy">Nothing waiting on you.</p>
-          <p className="mt-2 text-sm text-ink/60">
-            When our team drafts a post for your brand, it appears here first.
-          </p>
+        <div className="inv-card" style={{ marginBottom: 24 }}>
+          <div className="inv-empty">
+            <p className="inv-empty-title">Nothing waiting on you.</p>
+            <p className="inv-empty-text">
+              When our team drafts a post for your brand, it appears here first.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" style={{ marginBottom: 24 }}>
           {pending.map((post) => (
-            <div key={post.id} className="border-hairline bg-paper p-5">
-              <p className="whitespace-pre-wrap text-sm text-ink">{post.summary}</p>
-              {post.media.length > 0 ? (
-                <p className="mt-2 text-xs text-ink/55">
-                  Media:{" "}
-                  {post.media.map((m, i) => (
-                    <a
-                      key={i}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-navy underline underline-offset-2"
-                    >
-                      {m.label ?? `attachment ${i + 1}`}
-                    </a>
-                  ))}
+            <div key={post.id} className="inv-card">
+              <div className="inv-detail-section">
+                <p className="whitespace-pre-wrap text-sm">{post.summary}</p>
+                {post.media.length > 0 ? (
+                  <p className="mt-2 text-xs" style={{ color: "var(--inv-text-muted)" }}>
+                    Media:{" "}
+                    {post.media.map((m, i) => (
+                      <a
+                        key={i}
+                        href={m.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inv-link"
+                        style={{ marginRight: 8 }}
+                      >
+                        {m.label ?? `attachment ${i + 1}`}
+                      </a>
+                    ))}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-xs" style={{ color: "var(--inv-text-muted)" }}>
+                  {platformsFor(post.account_ids) || "Platforms set at publish time"}
+                  {post.schedule_at
+                    ? ` · will go out ${formatDateTime(post.schedule_at)}`
+                    : " · publishes once approved"}
                 </p>
-              ) : null}
-              <p className="mt-2 text-xs text-ink/55">
-                {platformsFor(post.account_ids) || "Platforms set at publish time"}
-                {post.schedule_at ? ` · will go out ${formatDateTime(post.schedule_at)}` : " · publishes once approved"}
-              </p>
-              <div className="mt-4">
-                <ApprovalActions postId={post.id} />
+                <div className="mt-4">
+                  <ApprovalActions postId={post.id} />
+                </div>
               </div>
             </div>
           ))}
@@ -80,27 +88,35 @@ export default async function ApprovalsPage() {
       )}
 
       {decided.length > 0 ? (
-        <div className="mt-12">
-          <h2 className="font-display text-xl text-navy">Recently decided</h2>
-          <ul className="mt-3 space-y-2">
-            {decided.slice(0, 10).map((post) => (
-              <li key={post.id} className="border-hairline bg-paper p-4 text-sm">
-                <span className="text-ink/70">
-                  {post.summary.slice(0, 120)}
-                  {post.summary.length > 120 ? "…" : ""}
-                </span>
-                <span className="mt-1 block text-xs text-ink/50">
-                  {post.status === "rejected"
-                    ? "Changes requested"
-                    : post.status === "published"
-                      ? "Published"
+        <div className="inv-card">
+          <div className="inv-detail-section">
+            <div className="inv-detail-label">Recently decided</div>
+            <div className="divide-y divide-[#e4e4e7]">
+              {decided.slice(0, 10).map((post) => (
+                <div key={post.id} className="flex items-start justify-between gap-4 py-3">
+                  <p className="min-w-0 text-sm" style={{ color: "var(--inv-text-secondary)" }}>
+                    {post.summary.slice(0, 120)}
+                    {post.summary.length > 120 ? "…" : ""}
+                  </p>
+                  <span
+                    className={`inv-badge shrink-0 ${
+                      post.status === "rejected"
+                        ? "inv-badge-overdue"
+                        : post.status === "published"
+                          ? "inv-badge-paid"
+                          : "inv-badge-open"
+                    }`}
+                  >
+                    {post.status === "rejected"
+                      ? "changes requested"
                       : post.status === "scheduled"
-                        ? `Scheduled for ${formatDateTime(post.schedule_at)}`
-                        : "Approved — publishing soon"}
-                </span>
-              </li>
-            ))}
-          </ul>
+                        ? `scheduled ${formatDateTime(post.schedule_at)}`
+                        : post.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

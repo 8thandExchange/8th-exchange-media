@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 
 export function ApprovalActions({ postId }: { postId: string }) {
   const router = useRouter();
@@ -35,23 +34,28 @@ export function ApprovalActions({ postId }: { postId: string }) {
 
   return (
     <div>
-      {error ? <p className="mb-2 text-sm text-red-700">{error}</p> : null}
+      {error ? <div className="inv-alert inv-alert-error">{error}</div> : null}
       {rejecting ? (
         <div className="space-y-3">
           <textarea
-            className="border-hairline w-full bg-cream p-3 text-sm"
+            className="inv-textarea"
             rows={3}
             placeholder="What should we change?"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          <div className="flex flex-wrap gap-3">
-            <Button tone="light" pill disabled={busy || !note.trim()} onClick={() => decide("rejected")}>
-              Send changes
-            </Button>
+          <div className="inv-action-row">
             <button
               type="button"
-              className="text-sm text-ink/60 underline underline-offset-4"
+              className="inv-btn inv-btn-primary"
+              disabled={busy || !note.trim()}
+              onClick={() => decide("rejected")}
+            >
+              Send changes
+            </button>
+            <button
+              type="button"
+              className="inv-btn inv-btn-ghost"
               onClick={() => setRejecting(false)}
               disabled={busy}
             >
@@ -60,13 +64,18 @@ export function ApprovalActions({ postId }: { postId: string }) {
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-3">
-          <Button tone="light" pill disabled={busy} onClick={() => decide("approved")}>
-            Approve
-          </Button>
+        <div className="inv-action-row">
           <button
             type="button"
-            className="text-sm text-ink/60 underline underline-offset-4"
+            className="inv-btn inv-btn-primary"
+            disabled={busy}
+            onClick={() => decide("approved")}
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            className="inv-btn inv-btn-secondary"
             onClick={() => setRejecting(true)}
             disabled={busy}
           >

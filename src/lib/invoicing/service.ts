@@ -13,6 +13,24 @@ export async function listInvoices(limit = 100): Promise<ReturnType<typeof mapIn
   return invoices.data.map(mapInvoice);
 }
 
+/**
+ * Invoices for one Stripe customer — the client-portal billing view.
+ * Scoping happens here (Stripe-side filter), so the caller only ever
+ * holds one client's invoices.
+ */
+export async function listInvoicesForCustomer(
+  customerId: string,
+  limit = 50
+): Promise<ReturnType<typeof mapInvoice>[]> {
+  const stripe = getStripe();
+  const invoices = await stripe.invoices.list({
+    customer: customerId,
+    limit,
+    expand: ["data.customer"],
+  });
+  return invoices.data.map(mapInvoice);
+}
+
 export async function getInvoice(id: string) {
   const stripe = getStripe();
   const invoice = await stripe.invoices.retrieve(id, {
