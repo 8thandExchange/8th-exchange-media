@@ -19,6 +19,15 @@ const browser = await puppeteer.launch({
 });
 
 const page = await browser.newPage();
+
+// SHOOT_COOKIE="name=value" sets a cookie before navigation, so gated
+// pages (staff/portal) can be shot without driving the login form.
+if (process.env.SHOOT_COOKIE) {
+  const [name, ...rest] = process.env.SHOOT_COOKIE.split("=");
+  const { hostname } = new globalThis.URL(URL);
+  await page.setCookie({ name, value: rest.join("="), domain: hostname, path: "/" });
+}
+
 await page.goto(URL, { waitUntil: "networkidle2", timeout: 60000 });
 
 // Gradually scroll to trigger reveals + lazy images, then return.

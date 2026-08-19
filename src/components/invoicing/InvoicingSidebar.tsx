@@ -13,9 +13,12 @@ import { cn } from "@/lib/utils";
 const NAV_GROUPS: { section: string; items: { href: string; label: string; exact?: boolean }[] }[] = [
   {
     section: "Studio",
+    items: [{ href: "/invoicing", label: "Overview", exact: true }],
+  },
+  {
+    section: "Social",
     items: [
-      { href: "/invoicing", label: "Overview", exact: true },
-      { href: "/invoicing/social", label: "Social Planner", exact: true },
+      { href: "/invoicing/social", label: "Planner", exact: true },
       { href: "/invoicing/social/pipeline", label: "Content Pipeline" },
     ],
   },
@@ -55,7 +58,7 @@ export function InvoicingSidebar() {
     <aside className="inv-sidebar">
       <Link href="/" className="inv-sidebar-brand" title="Back to 8emedia.com">
         <Image
-          src="/brand/assets/logo/coin-reversed-gold-antiqued.svg"
+          src="/brand/assets/logo/coin-primary-antiqued.svg"
           alt=""
           width={36}
           height={36}
@@ -87,12 +90,12 @@ export function InvoicingSidebar() {
           </div>
         ))}
       </nav>
-      <div className="border-t border-[rgba(244,239,227,0.12)] p-4">
+      <div className="border-t border-[#e4e4e7] p-4">
         <form action="/api/invoicing/auth" method="POST">
           <input type="hidden" name="action" value="logout" />
           <button
             type="submit"
-            className="w-full text-left text-[13px] text-[rgba(244,239,227,0.6)] transition-colors hover:text-[#f4efe3]"
+            className="w-full text-left text-[13px] text-[#71717a] transition-colors hover:text-[#18181b]"
           >
             Sign out
           </button>
