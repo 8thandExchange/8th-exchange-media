@@ -3,17 +3,21 @@ import { NewRequestForm } from "@/components/portal/NewRequestForm";
 
 export default function NewRequestPage() {
   return (
-    <div className="mx-auto max-w-2xl">
-      <Link href="/portal" className="nav-link">
+    <div style={{ maxWidth: 640 }}>
+      <Link href="/portal/requests" className="inv-link text-sm">
         ← Back to requests
       </Link>
-      <div className="mb-8 mt-4">
-        <p className="eyebrow eyebrow-on-light mb-2">New Request</p>
-        <h1 className="font-display text-3xl text-navy">Tell us what you need.</h1>
+      <div className="inv-page-header" style={{ marginTop: 12 }}>
+        <div>
+          <h1 className="inv-page-title">New request</h1>
+          <p className="inv-page-subtitle">Tell us what you need.</p>
+        </div>
       </div>
 
-      <div className="border-hairline bg-paper p-6 md:p-8">
-        <NewRequestForm />
+      <div className="inv-card">
+        <div className="inv-detail-section">
+          <NewRequestForm />
+        </div>
       </div>
     </div>
   );

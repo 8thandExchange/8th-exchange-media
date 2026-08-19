@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 
 const SERVICE_TYPES = [
   "Graphic design",
@@ -65,13 +64,11 @@ export function NewRequestForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error ? (
-        <p className="border border-navy/20 bg-navy/5 px-4 py-3 text-sm text-navy">{error}</p>
-      ) : null}
+    <form onSubmit={handleSubmit} className="inv-form-grid">
+      {error ? <div className="inv-alert inv-alert-error">{error}</div> : null}
 
-      <div>
-        <label htmlFor="req-title" className="field-label field-label-on-light">
+      <div className="inv-field">
+        <label htmlFor="req-title" className="inv-label">
           What do you need?
         </label>
         <input
@@ -80,20 +77,20 @@ export function NewRequestForm() {
           required
           maxLength={140}
           placeholder="e.g. Instagram graphics for July promotion"
-          className="field-input"
+          className="inv-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <label htmlFor="req-type" className="field-label field-label-on-light">
+      <div className="inv-form-grid inv-form-grid-2">
+        <div className="inv-field">
+          <label htmlFor="req-type" className="inv-label">
             Type of work
           </label>
           <select
             id="req-type"
-            className="field-input"
+            className="inv-select"
             value={serviceType}
             onChange={(e) => setServiceType(e.target.value)}
           >
@@ -105,22 +102,22 @@ export function NewRequestForm() {
           </select>
         </div>
 
-        <div>
-          <label htmlFor="req-due" className="field-label field-label-on-light">
+        <div className="inv-field">
+          <label htmlFor="req-due" className="inv-label">
             Needed by (optional)
           </label>
           <input
             id="req-due"
             type="date"
-            className="field-input"
+            className="inv-input"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
           />
         </div>
       </div>
 
-      <div>
-        <label htmlFor="req-brief" className="field-label field-label-on-light">
+      <div className="inv-field">
+        <label htmlFor="req-brief" className="inv-label">
           The brief
         </label>
         <textarea
@@ -130,27 +127,20 @@ export function NewRequestForm() {
           placeholder={
             "Tell us everything: goal, audience, sizes/formats, copy or links to assets, examples you like…"
           }
-          className="field-input resize-y"
+          className="inv-textarea"
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
         />
-        <p className="mt-2 text-xs text-ink/50">
+        <p className="inv-help">
           Link to files in Google Drive or Dropbox — the more context, the faster the turnaround.
         </p>
       </div>
 
       <fieldset>
-        <legend className="field-label field-label-on-light">Priority</legend>
-        <div className="mt-2 flex gap-3">
+        <legend className="inv-label">Priority</legend>
+        <div className="inv-segmented" style={{ marginTop: 8 }}>
           {(["standard", "rush"] as const).map((p) => (
-            <label
-              key={p}
-              className={`cursor-pointer border px-4 py-2 text-sm transition-colors ${
-                priority === p
-                  ? "border-navy bg-navy text-cream"
-                  : "border-navy/20 text-ink/70 hover:border-navy/50"
-              }`}
-            >
+            <label key={p} className={`inv-segment ${priority === p ? "active" : ""}`}>
               <input
                 type="radio"
                 name="priority"
@@ -165,10 +155,10 @@ export function NewRequestForm() {
         </div>
       </fieldset>
 
-      <div className="flex items-center gap-4">
-        <Button type="submit" tone="light" pill disabled={loading}>
+      <div className="inv-action-row">
+        <button type="submit" className="inv-btn inv-btn-primary" disabled={loading}>
           {loading ? "Submitting…" : "Submit request"}
-        </Button>
+        </button>
       </div>
     </form>
   );

@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getPortalClientId } from "@/lib/portal/auth";
-import { listRequestsForClient } from "@/lib/portal/service";
+import { getClientById, listRequestsForClient, type PortalRequest } from "@/lib/portal/service";
+import { listPipelinePosts, type SocialPostRow } from "@/lib/portal/social";
+import { listInvoicesForCustomer } from "@/lib/invoicing/service";
+import { formatMoney } from "@/lib/invoicing/format";
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+/**
+ * Client overview — the portal's front page. Every data source is guarded
+ * independently: a failing side system (Stripe, the social pipeline) must
+ * never take the page down, per the repo rule.
+ */
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -17,82 +27,143 @@ export default async function PortalHomePage() {
   const clientId = await getPortalClientId();
   if (!clientId) redirect("/portal/login");
 
-  const requests = await listRequestsForClient(clientId);
-  const active = requests.filter((r) => r.status !== "closed");
-  const closed = requests.filter((r) => r.status === "closed");
+  const client = await getClientById(clientId);
+  if (!client) redirect("/portal/login");
+
+  let pending: SocialPostRow[] = [];
+  let upcoming: SocialPostRow[] = [];
+  let requests: PortalRequest[] = [];
+  let openBalanceCents: number | null = null;
+  let openInvoiceCount = 0;
+  let invoiceCurrency = "usd";
+
+  await Promise.all([
+    listPipelinePosts(clientId, ["pending_approval"])
+      .then((rows) => {
+        pending = rows;
+      })
+      .catch((error) => console.error("Portal overview: pipeline pending failed", error)),
+    listPipelinePosts(clientId, ["approved", "scheduled"])
+      .then((rows) => {
+        upcoming = rows;
+      })
+      .catch((error) => console.error("Portal overview: pipeline upcoming failed", error)),
+    listRequestsForClient(clientId)
+      .then((rows) => {
+        requests = rows;
+      })
+      .catch((error) => console.error("Portal overview: requests failed", error)),
+    client.stripe_customer_id
+      ? listInvoicesForCustomer(client.stripe_customer_id)
+          .then((invoices) => {
+            const open = invoices.filter(
+              (i) => i.status === "open" || i.displayStatus === "overdue"
+            );
+            openInvoiceCount = open.length;
+            openBalanceCents = open.reduce((sum, i) => sum + i.amountDue, 0);
+            if (open[0]) invoiceCurrency = open[0].currency;
+          })
+          .catch((error) => console.error("Portal overview: invoices failed", error))
+      : Promise.resolve(),
+  ]);
+
+  const activeRequests = requests.filter((r) => r.status !== "closed");
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <div className="inv-page-header">
         <div>
-          <p className="eyebrow eyebrow-on-light mb-2">Requests</p>
-          <h1 className="font-display text-3xl text-navy">Your work queue</h1>
+          <h1 className="inv-page-title">Welcome back</h1>
+          <p className="inv-page-subtitle">
+            Everything 8th &amp; Exchange is running for {client.company}, in one place.
+          </p>
         </div>
-        <Button href="/portal/requests/new" tone="light" pill>
-          New Request
-        </Button>
+        <Link href="/portal/requests/new" className="inv-btn inv-btn-primary">
+          New request
+        </Link>
       </div>
 
-      {requests.length === 0 ? (
-        <div className="border-hairline bg-paper p-10 text-center">
-          <p className="font-display text-xl text-navy">No requests yet.</p>
-          <p className="mt-2 text-sm text-ink/60">
-            Submit your first request and our team will take it from there.
-          </p>
-          <div className="mt-6">
-            <Button href="/portal/requests/new" tone="light" pill>
-              Submit a request
-            </Button>
+      <div className="inv-stat-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        <Link href="/portal/approvals" className="inv-card inv-stat-card" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="inv-stat-label">Waiting on you</div>
+          <div className="inv-stat-value">{pending.length}</div>
+          <div className="inv-stat-meta">
+            {pending.length === 1 ? "post to approve" : "posts to approve"}
+          </div>
+        </Link>
+        <Link href="/portal/social" className="inv-card inv-stat-card" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="inv-stat-label">Scheduled</div>
+          <div className="inv-stat-value">{upcoming.length}</div>
+          <div className="inv-stat-meta">upcoming posts</div>
+        </Link>
+        <Link href="/portal/requests" className="inv-card inv-stat-card" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="inv-stat-label">Active requests</div>
+          <div className="inv-stat-value">{activeRequests.length}</div>
+          <div className="inv-stat-meta">in the work queue</div>
+        </Link>
+        <Link href="/portal/billing" className="inv-card inv-stat-card" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="inv-stat-label">Open balance</div>
+          <div className="inv-stat-value">
+            {openBalanceCents === null ? "—" : formatMoney(openBalanceCents, invoiceCurrency)}
+          </div>
+          <div className="inv-stat-meta">
+            {openBalanceCents === null
+              ? "no billing on file"
+              : `${openInvoiceCount} open invoice${openInvoiceCount === 1 ? "" : "s"}`}
+          </div>
+        </Link>
+      </div>
+
+      {pending.length > 0 ? (
+        <div className="inv-card" style={{ marginBottom: 24 }}>
+          <div className="inv-detail-section">
+            <div className="inv-detail-label">Waiting on your approval</div>
+            <div className="divide-y divide-[#e4e4e7]">
+              {pending.slice(0, 3).map((post) => (
+                <div key={post.id} className="flex items-center justify-between gap-4 py-3">
+                  <p className="min-w-0 truncate text-sm">{post.summary}</p>
+                  <span className="inv-badge inv-badge-open shrink-0">pending</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Link href="/portal/approvals" className="inv-link text-sm">
+                Review and approve →
+              </Link>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="space-y-10">
-          <section className="space-y-3">
-            {active.length === 0 ? (
-              <p className="text-sm text-ink/55">Nothing in progress right now.</p>
-            ) : (
-              active.map((r) => (
+      ) : null}
+
+      <div className="inv-card">
+        <div className="inv-detail-section">
+          <div className="inv-detail-label">Recent requests</div>
+          {requests.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--inv-text-secondary)" }}>
+              No requests yet. Submit your first and our team takes it from there.
+            </p>
+          ) : (
+            <div className="divide-y divide-[#e4e4e7]">
+              {requests.slice(0, 5).map((r) => (
                 <Link
                   key={r.id}
                   href={`/portal/requests/${r.id}`}
-                  className="border-hairline block bg-paper p-5 transition-colors hover:border-navy/30"
+                  className="flex items-center justify-between gap-4 py-3"
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-navy">{r.title}</p>
-                      <p className="mt-1 text-xs text-ink/55">
-                        {r.service_type} · Submitted {formatDate(r.created_at)}
-                        {r.priority === "rush" ? " · Rush" : ""}
-                      </p>
-                    </div>
-                    <StatusBadge status={r.status} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{r.title}</p>
+                    <p className="text-xs" style={{ color: "var(--inv-text-muted)" }}>
+                      {r.service_type} · {formatDateTime(r.created_at)}
+                    </p>
                   </div>
+                  <StatusBadge status={r.status} />
                 </Link>
-              ))
-            )}
-          </section>
-
-          {closed.length > 0 ? (
-            <section>
-              <p className="eyebrow eyebrow-on-light mb-3">Closed</p>
-              <div className="space-y-3">
-                {closed.map((r) => (
-                  <Link
-                    key={r.id}
-                    href={`/portal/requests/${r.id}`}
-                    className="border-hairline block bg-paper/60 p-5 opacity-70 transition-opacity hover:opacity-100"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="truncate font-semibold text-navy">{r.title}</p>
-                      <StatusBadge status={r.status} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ) : null}
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

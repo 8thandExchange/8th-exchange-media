@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 
 interface CommentFormProps {
   endpoint: string;
@@ -51,20 +50,18 @@ export function CommentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {error ? (
-        <p className="border border-navy/20 bg-navy/5 px-4 py-2 text-sm text-navy">{error}</p>
-      ) : null}
+      {error ? <div className="inv-alert inv-alert-error">{error}</div> : null}
       <textarea
         rows={3}
         required
         placeholder={placeholder}
-        className="field-input resize-y"
+        className="inv-textarea"
         value={body}
         onChange={(e) => setBody(e.target.value)}
       />
-      <Button type="submit" tone="light" pill disabled={loading || !body.trim()}>
+      <button type="submit" className="inv-btn inv-btn-primary" disabled={loading || !body.trim()}>
         {loading ? "Sending…" : buttonLabel}
-      </Button>
+      </button>
     </form>
   );
 }
