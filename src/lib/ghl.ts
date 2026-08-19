@@ -153,6 +153,32 @@ export async function listSocialAccounts(auth?: GhlAuth): Promise<{
   };
 }
 
+/**
+ * GHL requires every post to be attributed to a location user, and a
+ * Private Integration token has no user of its own — so we attribute to
+ * the first user in the location. Needs the "View Users" scope on the PIT.
+ */
+async function firstLocationUserId(auth: GhlAuth): Promise<string> {
+  const response = await fetch(`${GHL_BASE}/users/?locationId=${auth.locationId}`, {
+    headers: ghlHeaders(auth.token),
+    cache: "no-store",
+  });
+  if (response.status === 401) {
+    throw new Error(
+      'GHL rejected the user lookup — the Private Integration token is missing the "View Users" scope. Add it under Settings → Private Integrations in that sub-account, then retry.'
+    );
+  }
+  if (!response.ok) {
+    throw new Error(`GHL users fetch failed (${response.status})`);
+  }
+  const data = (await response.json()) as { users?: { id?: string }[] };
+  const userId = data.users?.find((u) => u.id)?.id;
+  if (!userId) {
+    throw new Error("This GHL location has no users to attribute the post to");
+  }
+  return userId;
+}
+
 export async function createSocialPost(input: {
   summary: string;
   accountIds: string[];
@@ -161,13 +187,15 @@ export async function createSocialPost(input: {
   scheduleDate?: string;
   status?: "draft" | "scheduled" | "published";
 }, auth?: GhlAuth): Promise<unknown> {
-  const { token, locationId } = requireGhlAuth(auth);
+  const config = requireGhlAuth(auth);
+  const { token, locationId } = config;
 
   const body: Record<string, unknown> = {
     accountIds: input.accountIds,
     summary: input.summary,
     type: "post",
     status: input.status ?? (input.scheduleDate ? "scheduled" : "draft"),
+    userId: await firstLocationUserId(config),
   };
   if (input.scheduleDate) body.scheduleDate = input.scheduleDate;
   if (input.mediaUrls?.length) {
