@@ -5,10 +5,30 @@ import { useState } from "react";
 import type {
   HashtagGroupRow,
   MediaAssetRow,
+  PostingSlotRow,
   SocialAccountRow,
   SocialPostRow,
   SocialPostStatus,
 } from "@/lib/portal/social";
+
+/** Hard caps per platform; posting past these fails at publish time. */
+const PLATFORM_LIMITS: Record<string, number> = {
+  twitter: 280,
+  x: 280,
+  google: 1500,
+  instagram: 2200,
+  tiktok: 2200,
+  linkedin: 3000,
+  facebook: 63206,
+};
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Local-time value for a datetime-local input. */
+function toLocalInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 const SECTIONS: { title: string; statuses: SocialPostStatus[]; hint?: string }[] = [
   { title: "Ideas & drafts", statuses: ["idea", "draft"] },
@@ -41,6 +61,7 @@ export function PipelineBoard({
   posts,
   media,
   hashtagGroups,
+  slots,
 }: {
   clientId: string | null;
   clientCompany: string | null;
@@ -49,11 +70,13 @@ export function PipelineBoard({
   posts: SocialPostRow[];
   media: MediaAssetRow[];
   hashtagGroups: HashtagGroupRow[];
+  slots: PostingSlotRow[];
 }) {
   const router = useRouter();
   const connected = accounts.filter((a) => a.status === "connected");
 
   const [summary, setSummary] = useState("");
+  const [variants, setVariants] = useState<Record<string, string>>({});
   const [mediaUrl, setMediaUrl] = useState("");
   const [selected, setSelected] = useState<string[]>(connected.map((a) => a.ghl_account_id));
   const [scheduleAt, setScheduleAt] = useState("");
@@ -67,6 +90,52 @@ export function PipelineBoard({
   const [assetUrl, setAssetUrl] = useState("");
   const [groupName, setGroupName] = useState("");
   const [groupTags, setGroupTags] = useState("");
+  const [slotWeekday, setSlotWeekday] = useState(2);
+  const [slotTime, setSlotTime] = useState("09:00");
+  const [slotCategory, setSlotCategory] = useState("");
+
+  const selectedPlatforms = [
+    ...new Set(
+      connected
+        .filter((a) => selected.includes(a.ghl_account_id))
+        .map((a) => a.platform)
+    ),
+  ];
+
+  const effectiveText = (platform: string) => variants[platform]?.trim() || summary;
+
+  const overLimit = selectedPlatforms.filter((p) => {
+    const limit = PLATFORM_LIMITS[p];
+    return limit !== undefined && effectiveText(p).length > limit;
+  });
+
+  /**
+   * Next open queue slot: the soonest active slot time in the coming
+   * four weeks that no scheduled post already occupies.
+   */
+  function nextOpenSlot(): Date | null {
+    const active = slots.filter((s) => s.active);
+    if (active.length === 0) return null;
+    const taken = new Set(
+      posts
+        .filter((p) => p.schedule_at && ["approved", "scheduled", "pending_approval", "draft"].includes(p.status))
+        .map((p) => new Date(p.schedule_at!).getTime())
+    );
+    const now = Date.now();
+    const candidates: Date[] = [];
+    for (let offset = 0; offset < 28; offset++) {
+      const day = new Date();
+      day.setDate(day.getDate() + offset);
+      for (const slot of active) {
+        if (day.getDay() !== slot.weekday) continue;
+        const [h, m] = slot.slot_time.split(":").map(Number);
+        const when = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
+        if (when.getTime() > now && !taken.has(when.getTime())) candidates.push(when);
+      }
+    }
+    candidates.sort((a, b) => a.getTime() - b.getTime());
+    return candidates[0] ?? null;
+  }
 
   function note(msg: string) {
     setMessage(msg);
@@ -80,6 +149,7 @@ export function PipelineBoard({
 
   function resetComposer() {
     setSummary("");
+    setVariants({});
     setMediaUrl("");
     setScheduleAt("");
     setCategory("");
@@ -90,9 +160,10 @@ export function PipelineBoard({
   function loadIntoComposer(post: SocialPostRow) {
     setEditingId(post.id);
     setSummary(post.summary);
+    setVariants(post.variants ?? {});
     setMediaUrl(post.media[0]?.url ?? "");
     setSelected(post.account_ids);
-    setScheduleAt(post.schedule_at ? post.schedule_at.slice(0, 16) : "");
+    setScheduleAt(post.schedule_at ? toLocalInputValue(new Date(post.schedule_at)) : "");
     setCategory(post.category ?? "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -100,9 +171,13 @@ export function PipelineBoard({
   async function saveComposer(thenSubmit: boolean) {
     setBusy(true);
     try {
+      const cleanVariants = Object.fromEntries(
+        Object.entries(variants).filter(([, text]) => text.trim().length > 0)
+      );
       const payload = {
         clientId: clientId ?? undefined,
         summary,
+        variants: cleanVariants,
         media: mediaUrl.trim() ? [{ url: mediaUrl.trim() }] : [],
         accountIds: selected,
         scheduleAt: scheduleAt ? new Date(scheduleAt).toISOString() : editingId ? null : undefined,
@@ -251,6 +326,51 @@ export function PipelineBoard({
     }
   }
 
+  async function addSlot() {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/portal/admin/social/slots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: clientId ?? undefined,
+          weekday: slotWeekday,
+          slotTime: slotTime,
+          category: slotCategory.trim() || undefined,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        fail(data?.error ?? "Failed to add the slot");
+        return;
+      }
+      note("Queue slot added.");
+      setSlotCategory("");
+      router.refresh();
+    } catch {
+      fail("Failed to add the slot — try again");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeSlot(id: string) {
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/portal/admin/social/slots?id=${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        fail("Failed to remove the slot");
+        return;
+      }
+      note("Queue slot removed.");
+      router.refresh();
+    } catch {
+      fail("Failed to remove the slot — try again");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const accountName = (id: string) => {
     const account = accounts.find((a) => a.ghl_account_id === id);
     return account ? `${account.platform}: ${account.name ?? ""}` : "unknown account";
@@ -362,6 +482,56 @@ export function PipelineBoard({
             )}
           </div>
 
+          {selectedPlatforms.length > 0 && summary.trim() ? (
+            <div className="inv-field">
+              <span className="inv-label">Fit check</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.3rem" }}>
+                {selectedPlatforms.map((p) => {
+                  const limit = PLATFORM_LIMITS[p];
+                  const length = effectiveText(p).length;
+                  const over = limit !== undefined && length > limit;
+                  return (
+                    <span
+                      key={p}
+                      className={`inv-badge ${over ? "inv-badge-overdue" : "inv-badge-open"}`}
+                      title={over ? `Over ${p}'s limit — this will fail to publish` : undefined}
+                    >
+                      {p} {length}
+                      {limit !== undefined ? `/${limit}` : ""}
+                      {variants[p]?.trim() ? " · custom" : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {selectedPlatforms.length > 1 ? (
+            <div className="inv-field">
+              <span className="inv-label">Tailor per platform (optional — blank means the main text)</span>
+              <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.3rem" }}>
+                {selectedPlatforms.map((p) => (
+                  <details key={p}>
+                    <summary style={{ fontSize: "13px", cursor: "pointer", color: "var(--inv-text-secondary)" }}>
+                      {p}
+                      {variants[p]?.trim() ? " — customized" : ""}
+                    </summary>
+                    <textarea
+                      className="inv-textarea"
+                      rows={3}
+                      placeholder={`Version for ${p} (shorter for X, CTA for Google, hashtags for Instagram…)`}
+                      value={variants[p] ?? ""}
+                      onChange={(e) =>
+                        setVariants((v) => ({ ...v, [p]: e.target.value }))
+                      }
+                      style={{ marginTop: "6px" }}
+                    />
+                  </details>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="inv-form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
             <div className="inv-field">
               <label className="inv-label" htmlFor="pb-schedule">Schedule for (optional)</label>
@@ -372,6 +542,24 @@ export function PipelineBoard({
                 value={scheduleAt}
                 onChange={(e) => setScheduleAt(e.target.value)}
               />
+              {slots.some((s) => s.active) ? (
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-ghost"
+                  style={{ marginTop: "6px" }}
+                  onClick={() => {
+                    const slot = nextOpenSlot();
+                    if (slot) {
+                      setScheduleAt(toLocalInputValue(slot));
+                      note(`Queued for ${slot.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`);
+                    } else {
+                      fail("No open queue slot in the next four weeks — add slots on the right.");
+                    }
+                  }}
+                >
+                  Next open queue slot
+                </button>
+              ) : null}
             </div>
             <div className="inv-field">
               <label className="inv-label" htmlFor="pb-category">Category (optional)</label>
@@ -397,7 +585,8 @@ export function PipelineBoard({
             <button
               type="button"
               className="inv-btn inv-btn-primary"
-              disabled={busy || !canSave}
+              disabled={busy || !canSave || overLimit.length > 0}
+              title={overLimit.length ? `Over the limit for: ${overLimit.join(", ")}` : undefined}
               onClick={() => saveComposer(true)}
             >
               {clientId ? "Send for client approval" : "Mark ready"}
@@ -422,7 +611,20 @@ export function PipelineBoard({
               <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "0.4rem" }}>
                 {media.slice(0, 8).map((m) => (
                   <li key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "center", fontSize: "13px" }}>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.label}</span>
+                    {m.type === "image" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.url}
+                        alt=""
+                        width={32}
+                        height={32}
+                        loading="lazy"
+                        style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 4, border: "1px solid var(--inv-border)", flexShrink: 0 }}
+                      />
+                    ) : (
+                      <span className="inv-badge inv-badge-open" style={{ flexShrink: 0 }}>{m.type}</span>
+                    )}
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{m.label}</span>
                     <button type="button" className="inv-btn inv-btn-ghost" onClick={() => setMediaUrl(m.url)}>
                       Use
                     </button>
@@ -461,6 +663,63 @@ export function PipelineBoard({
               onClick={() => addToLibrary("hashtags")}
             >
               Save group
+            </button>
+          </div>
+
+          <div className="inv-card">
+            <div className="inv-detail-label">Posting queue</div>
+            <p style={{ fontSize: "12.5px", color: "var(--inv-text-muted)", marginTop: 0 }}>
+              Standing publish times for this brand. The composer&apos;s &quot;Next open queue
+              slot&quot; button fills from these.
+            </p>
+            {slots.length > 0 ? (
+              <ul style={{ listStyle: "none", margin: "0 0 0.75rem", padding: 0, display: "grid", gap: "0.35rem" }}>
+                {slots.map((s) => (
+                  <li key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", fontSize: "13px" }}>
+                    <span>
+                      {WEEKDAYS[s.weekday]} {s.slot_time.slice(0, 5)}
+                      {s.category ? ` · ${s.category}` : ""}
+                    </span>
+                    <button type="button" className="inv-btn inv-btn-ghost" disabled={busy} onClick={() => removeSlot(s.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="inv-form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div className="inv-field">
+                <select
+                  className="inv-input"
+                  value={slotWeekday}
+                  onChange={(e) => setSlotWeekday(Number(e.target.value))}
+                  aria-label="Weekday"
+                >
+                  {WEEKDAYS.map((d, i) => (
+                    <option key={d} value={i}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="inv-field">
+                <input
+                  type="time"
+                  className="inv-input"
+                  value={slotTime}
+                  onChange={(e) => setSlotTime(e.target.value)}
+                  aria-label="Time"
+                />
+              </div>
+            </div>
+            <div className="inv-field">
+              <input
+                className="inv-input"
+                placeholder="Category (optional)"
+                value={slotCategory}
+                onChange={(e) => setSlotCategory(e.target.value)}
+              />
+            </div>
+            <button type="button" className="inv-btn inv-btn-secondary" disabled={busy} onClick={addSlot}>
+              Add slot
             </button>
           </div>
         </div>

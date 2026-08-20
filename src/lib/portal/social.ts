@@ -245,6 +245,11 @@ export async function cancelPipelinePost(id: string): Promise<SocialPostRow> {
  * Push an approved (or draft, for agency-only brands) post into GHL's
  * Social Planner. With scheduleAt set it schedules; without, it
  * publishes immediately. Records the GHL post id, or the failure.
+ *
+ * Per-platform variants: accounts whose platform has an override in
+ * post.variants get that text; the rest get summary. Accounts sharing
+ * the same effective text go out as one GHL post, so identical text
+ * still means a single post across all accounts.
  */
 export async function pushPipelinePostToGhl(
   id: string,
@@ -256,28 +261,47 @@ export async function pushPipelinePostToGhl(
     throw new Error("Pick at least one social account before publishing");
   }
 
+  const { accounts } = await listSocialAccounts(auth);
+  const platformOf = new Map(accounts.map((a) => [a.id, a.platform ?? "unknown"]));
+
+  const textGroups = new Map<string, string[]>();
+  for (const accountId of post.account_ids) {
+    const platform = platformOf.get(accountId) ?? "unknown";
+    const text = post.variants[platform]?.trim() || post.summary;
+    textGroups.set(text, [...(textGroups.get(text) ?? []), accountId]);
+  }
+
+  const ghlPostIds: string[] = [];
   try {
-    const result = (await createSocialPost(
-      {
-        summary: post.summary,
-        accountIds: post.account_ids,
-        mediaUrls: post.media.map((m) => m.url),
-        scheduleDate: post.schedule_at ?? undefined,
-        status: post.schedule_at ? "scheduled" : "published",
-      },
-      auth
-    )) as { results?: { post?: { _id?: string } } };
+    for (const [text, accountIds] of textGroups) {
+      const result = (await createSocialPost(
+        {
+          summary: text,
+          accountIds,
+          mediaUrls: post.media.map((m) => m.url),
+          scheduleDate: post.schedule_at ?? undefined,
+          status: post.schedule_at ? "scheduled" : "published",
+        },
+        auth
+      )) as { results?: { post?: { _id?: string } } };
+      const ghlId = result.results?.post?._id;
+      if (ghlId) ghlPostIds.push(ghlId);
+    }
 
     return updatePost(id, {
       status: post.schedule_at ? "scheduled" : "published",
       published_at: post.schedule_at ? null : new Date().toISOString(),
-      ghl_post_id: result.results?.post?._id ?? null,
+      ghl_post_id: ghlPostIds.join(",") || null,
       error: null,
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message.slice(0, 400) : "Unknown error";
     await updatePost(id, {
       status: "failed",
-      error: err instanceof Error ? err.message.slice(0, 500) : "Unknown error",
+      ghl_post_id: ghlPostIds.join(",") || null,
+      error: ghlPostIds.length
+        ? `Partially published (${ghlPostIds.length} of ${textGroups.size} variants went out) then failed: ${message}`
+        : message,
     });
     throw err;
   }
@@ -405,4 +429,12 @@ export async function addPostingSlot(input: {
     .single();
   throwIfError(error);
   return data!;
+}
+
+export async function deletePostingSlot(id: string): Promise<void> {
+  const { error } = await getPortalDb()
+    .from("portal_posting_slots")
+    .delete()
+    .eq("id", id);
+  throwIfError(error);
 }
