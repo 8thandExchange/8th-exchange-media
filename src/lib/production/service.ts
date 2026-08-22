@@ -80,7 +80,23 @@ export async function createCreativeProject(input: {
   dueAt?: string;
 }): Promise<CreativeProject> {
   const existing = await getCreativeProjectForCampaign(input.campaignId);
-  if (existing) return existing;
+  if (existing) {
+    const { count, error } = await getPortalDb()
+      .from("creative_artifacts")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", existing.id);
+    throwIfError(error);
+    if ((count ?? 0) >= 9) return existing;
+    if (Date.now() - new Date(existing.created_at).getTime() < 10 * 60 * 1000) {
+      throw new Error("This production package is still initializing. Try again shortly.");
+    }
+    const { error: cleanupError } = await getPortalDb()
+      .from("creative_projects")
+      .delete()
+      .eq("id", existing.id)
+      .eq("status", "planning");
+    throwIfError(cleanupError);
+  }
 
   const campaignBundle = await getCampaignBundle(input.campaignId);
   const { campaign, opportunity } = campaignBundle;
@@ -123,14 +139,15 @@ export async function createCreativeProject(input: {
   const project = projectRow as CreativeProject;
 
   try {
-    let generated = generateCreativePackage({
+    const generationInput = {
       campaign,
       opportunity,
       productionType: input.productionType,
       targetDurationSeconds: input.targetDurationSeconds,
       brandKeywords: brandKit?.keywords ?? [],
       internalLinks: links,
-    });
+    };
+    let generated = generateCreativePackage(generationInput);
     const deterministicScript = generated.find(
       (item) => item.artifactType === "script"
     )!.content as ScriptContent;
@@ -150,7 +167,8 @@ export async function createCreativeProject(input: {
     const inputManifest = {
       sourceManifest,
       brandSnapshot: brand,
-      targetDurationSeconds: input.targetDurationSeconds,
+      generationInput,
+      aiPromptVersion: "production-script-v1",
     };
     const { data: run, error: runError } = await db
       .from("creative_generation_runs")
@@ -300,6 +318,16 @@ export async function getCreativeProjectBundle(
   };
 }
 
+function revisionManifest(bundle: CreativeProjectBundle) {
+  return bundle.artifacts
+    .filter((entry) => entry.artifact.required && entry.selectedRevision)
+    .map((entry) => ({
+      artifactId: entry.artifact.id,
+      revisionId: entry.selectedRevision!.id,
+      contentHash: entry.selectedRevision!.content_hash,
+    }));
+}
+
 export async function createArtifactRevision(input: {
   projectId: string;
   artifactType: CreativeArtifactType;
@@ -315,34 +343,22 @@ export async function createArtifactRevision(input: {
   );
   if (!entry) throw new Error("Unknown creative artifact");
   const hash = contentHash(input.content);
-  const duplicate = entry.revisions.find((revision) => revision.content_hash === hash);
-  if (duplicate) return duplicate;
-
-  const { data: revision, error } = await getPortalDb()
-    .from("creative_artifact_revisions")
-    .insert({
-      artifact_id: entry.artifact.id,
-      revision_number: Math.max(...entry.revisions.map((item) => item.revision_number), 0) + 1,
-      schema_key: entry.currentRevision.schema_key,
-      schema_version: entry.currentRevision.schema_version,
-      content: input.content,
-      content_hash: hash,
-      generation_method: "manual",
-      created_by: input.createdBy ?? "staff",
-    })
-    .select("*")
-    .single();
+  const { data: revision, error } = await getPortalDb().rpc(
+    "creative_create_artifact_revision",
+    {
+      p_project_id: bundle.project.id,
+      p_expected_status: bundle.project.status,
+      p_lock_version: bundle.project.lock_version,
+      p_artifact_id: entry.artifact.id,
+      p_content: input.content,
+      p_content_hash: hash,
+      p_created_by: input.createdBy ?? "staff",
+    }
+  );
+  if (error?.message.includes("STALE_PROJECT")) {
+    throw new Error("This production changed in another session. Refresh before saving.");
+  }
   throwIfError(error);
-  const { error: updateError } = await getPortalDb()
-    .from("creative_artifacts")
-    .update({
-      current_revision_id: revision.id,
-      selected_revision_id: revision.id,
-      state: "working",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", entry.artifact.id);
-  throwIfError(updateError);
   return revision as CreativeArtifactRevision;
 }
 
@@ -362,31 +378,82 @@ export async function addCreativeRightsAsset(input: {
   restrictions?: string;
 }): Promise<CreativeRightsAsset> {
   const bundle = await getCreativeProjectBundle(input.projectId);
-  const now = new Date().toISOString();
-  const { data, error } = await getPortalDb()
-    .from("creative_rights_assets")
-    .insert({
-      project_id: input.projectId,
-      client_id: bundle.project.client_id,
+  const { data, error } = await getPortalDb().rpc("creative_add_rights_asset", {
+    p_project_id: input.projectId,
+    p_expected_status: bundle.project.status,
+    p_lock_version: bundle.project.lock_version,
+    p_asset: {
       label: input.label,
-      asset_type: input.assetType,
-      source_url: input.sourceUrl,
-      owner_name: input.ownerName,
-      rights_basis: input.rightsBasis,
+      assetType: input.assetType,
+      sourceUrl: input.sourceUrl,
+      ownerName: input.ownerName,
+      rightsBasis: input.rightsBasis,
       status: input.status,
-      allowed_channels: input.allowedChannels,
-      allowed_territories: input.allowedTerritories,
-      modification_allowed: input.modificationAllowed,
-      expires_at: input.expiresAt ?? null,
-      evidence_url: input.evidenceUrl || null,
-      restrictions: input.restrictions || null,
-      cleared_by: input.status === "cleared" ? "staff" : null,
-      cleared_at: input.status === "cleared" ? now : null,
-    })
-    .select("*")
-    .single();
+      allowedChannels: input.allowedChannels,
+      allowedTerritories: input.allowedTerritories,
+      modificationAllowed: input.modificationAllowed,
+      expiresAt: input.expiresAt ?? "",
+      evidenceUrl: input.evidenceUrl ?? "",
+      restrictions: input.restrictions ?? "",
+    },
+  });
+  if (error?.message.includes("STALE_PROJECT")) {
+    throw new Error("This production changed in another session. Refresh before adding assets.");
+  }
   throwIfError(error);
   return data as CreativeRightsAsset;
+}
+
+export async function updateCreativeRightsAsset(input: {
+  projectId: string;
+  assetId: string;
+  status: CreativeRightsAsset["status"];
+  evidenceUrl?: string;
+  restrictions?: string;
+}): Promise<CreativeRightsAsset> {
+  const bundle = await getCreativeProjectBundle(input.projectId);
+  const existing = bundle.rights.find((asset) => asset.id === input.assetId);
+  if (!existing) throw new Error("Unknown production asset");
+  const { data, error } = await getPortalDb().rpc("creative_update_rights_asset", {
+    p_project_id: input.projectId,
+    p_expected_status: bundle.project.status,
+    p_lock_version: bundle.project.lock_version,
+    p_asset_id: input.assetId,
+    p_status: input.status,
+    p_evidence_url: input.evidenceUrl ?? null,
+    p_restrictions: input.restrictions ?? null,
+  });
+  if (error?.message.includes("STALE_PROJECT")) {
+    throw new Error("This production changed in another session. Refresh before updating rights.");
+  }
+  if (error?.message.includes("PUBLISHING_IN_PROGRESS")) {
+    throw new Error("Rights cannot change while a post is being published");
+  }
+  throwIfError(error);
+  return data as CreativeRightsAsset;
+}
+
+export async function deleteCreativeRightsAsset(input: {
+  projectId: string;
+  assetId: string;
+}): Promise<void> {
+  const bundle = await getCreativeProjectBundle(input.projectId);
+  if (!bundle.rights.some((asset) => asset.id === input.assetId)) {
+    throw new Error("Unknown production asset");
+  }
+  const { error } = await getPortalDb().rpc("creative_delete_rights_asset", {
+    p_project_id: input.projectId,
+    p_expected_status: bundle.project.status,
+    p_lock_version: bundle.project.lock_version,
+    p_asset_id: input.assetId,
+  });
+  if (error?.message.includes("PUBLISHING_IN_PROGRESS")) {
+    throw new Error("Rights cannot change while a post is being published");
+  }
+  if (error?.message.includes("STALE_PROJECT")) {
+    throw new Error("This production changed in another session. Refresh before removing assets.");
+  }
+  throwIfError(error);
 }
 
 export async function executeCreativeQa(
@@ -472,6 +539,11 @@ export async function transitionCreativeProject(
   note?: string
 ): Promise<CreativeProject> {
   const bundle = await getCreativeProjectBundle(id);
+  if (!CREATIVE_TRANSITIONS[bundle.project.status].includes(next)) {
+    throw new Error(
+      `Production cannot move from ${bundle.project.status} to ${next}`
+    );
+  }
   if (next === "in_review") {
     const qa = await executeCreativeQa(bundle);
     const blockers = qa.results.filter(
@@ -482,6 +554,24 @@ export async function transitionCreativeProject(
         `Resolve ${blockers.length} blocking QA check${blockers.length === 1 ? "" : "s"} before client review`
       );
     }
+    const manifest = revisionManifest(bundle);
+    if (manifest.length !== bundle.artifacts.filter((entry) => entry.artifact.required).length) {
+      throw new Error("Every required artifact needs a selected revision before review");
+    }
+    const { data, error } = await getPortalDb().rpc("creative_submit_project", {
+      p_id: bundle.project.id,
+      p_expected: bundle.project.status,
+      p_lock_version: bundle.project.lock_version,
+      p_manifest: manifest,
+      p_client_visible: Boolean(bundle.project.client_id),
+      p_note: note ?? null,
+      p_actor: "staff",
+    });
+    if (error?.message.includes("STALE_")) {
+      throw new Error("The production package changed during QA. Refresh and submit it again.");
+    }
+    throwIfError(error);
+    return data as CreativeProject;
   }
   if (next === "changes_requested" && !note?.trim()) {
     throw new Error("Add a specific change request before returning production");
@@ -489,85 +579,50 @@ export async function transitionCreativeProject(
   if (next === "approved" && bundle.project.client_id) {
     throw new Error("The client must approve this exact production package in their portal");
   }
-  const transitioned = await atomicTransition(bundle.project, next, note, "staff");
-  if (next === "in_review") {
-    const { error: visibilityError } = await getPortalDb()
-      .from("creative_projects")
-      .update({ client_visible: Boolean(bundle.project.client_id) })
-      .eq("id", id);
-    throwIfError(visibilityError);
-    const { error: artifactError } = await getPortalDb()
-      .from("creative_artifacts")
-      .update({ state: "in_review" })
-      .eq("project_id", id)
-      .eq("required", true);
-    throwIfError(artifactError);
+  if (next === "approved" || next === "changes_requested") {
+    return decideProjectPackage({
+      bundle,
+      decision: next,
+      reviewerType: "staff",
+      reviewerId: null,
+      reviewerLabel: "8E Studio",
+      note,
+    });
   }
-  if (next === "changes_requested") {
-    const { error } = await getPortalDb()
-      .from("creative_artifacts")
-      .update({ state: "changes_requested" })
-      .eq("project_id", id)
-      .eq("required", true);
-    throwIfError(error);
-  }
-  if (next === "in_production" && bundle.project.status === "changes_requested") {
-    const { error } = await getPortalDb()
-      .from("creative_artifacts")
-      .update({ state: "working" })
-      .eq("project_id", id)
-      .eq("required", true);
-    throwIfError(error);
-  }
-  if (next === "approved") {
-    await recordProjectApproval(bundle, "staff", "8E Studio", note);
-  }
-  return transitioned;
+  return atomicTransition(bundle.project, next, note, "staff");
 }
 
-async function recordProjectApproval(
-  bundle: CreativeProjectBundle,
-  reviewerType: "staff" | "client",
+async function decideProjectPackage(input: {
+  bundle: CreativeProjectBundle;
+  decision: "approved" | "changes_requested";
+  reviewerType: "staff" | "client";
+  reviewerId: string | null;
   reviewerLabel: string,
-  note?: string
-): Promise<void> {
-  const selected = bundle.artifacts
-    .filter((entry) => entry.artifact.required && entry.selectedRevision)
-    .map((entry) => entry.selectedRevision!);
-  if (selected.length !== bundle.artifacts.filter((entry) => entry.artifact.required).length) {
+  note?: string;
+}): Promise<CreativeProject> {
+  const manifest = revisionManifest(input.bundle);
+  if (
+    manifest.length !==
+    input.bundle.artifacts.filter((entry) => entry.artifact.required).length
+  ) {
     throw new Error("Every required artifact needs a selected revision before approval");
   }
-  const db = getPortalDb();
-  const { error: reviewError } = await db.from("creative_reviews").insert(
-    selected.map((revision) => ({
-      project_id: bundle.project.id,
-      revision_id: revision.id,
-      gate_key: "production-package",
-      decision: "approved",
-      reviewer_type: reviewerType,
-      reviewer_id: reviewerType === "client" ? bundle.project.client_id : null,
-      reviewer_label: reviewerLabel,
-      note: note?.trim() || null,
-      content_hash: revision.content_hash,
-    }))
-  );
-  throwIfError(reviewError);
-  const now = new Date().toISOString();
-  const { error: artifactError } = await db
-    .from("creative_artifacts")
-    .update({ state: "approved", updated_at: now })
-    .eq("project_id", bundle.project.id)
-    .eq("required", true);
-  throwIfError(artifactError);
-  const { error: projectError } = await db
-    .from("creative_projects")
-    .update({
-      approved_by: reviewerLabel,
-      approved_at: now,
-      client_visible: Boolean(bundle.project.client_id),
-    })
-    .eq("id", bundle.project.id);
-  throwIfError(projectError);
+  const { data, error } = await getPortalDb().rpc("creative_decide_project", {
+    p_id: input.bundle.project.id,
+    p_expected: input.bundle.project.status,
+    p_lock_version: input.bundle.project.lock_version,
+    p_manifest: manifest,
+    p_decision: input.decision,
+    p_reviewer_type: input.reviewerType,
+    p_reviewer_id: input.reviewerId,
+    p_reviewer_label: input.reviewerLabel,
+    p_note: input.note ?? null,
+  });
+  if (error?.message.includes("STALE_")) {
+    throw new Error("The selected production revisions changed. Refresh before deciding.");
+  }
+  throwIfError(error);
+  return data as CreativeProject;
 }
 
 export async function decideCreativeProjectForClient(input: {
@@ -587,40 +642,14 @@ export async function decideCreativeProjectForClient(input: {
   if (input.decision === "changes_requested" && !input.note?.trim()) {
     throw new Error("Tell the studio what to change");
   }
-  const next = input.decision === "approved" ? "approved" : "changes_requested";
-  const transitioned = await atomicTransition(
-    bundle.project,
-    next,
-    input.note,
-    "client"
-  );
-  if (next === "approved") {
-    await recordProjectApproval(bundle, "client", input.reviewerLabel, input.note);
-  } else {
-    const selected = bundle.artifacts
-      .filter((entry) => entry.artifact.required && entry.selectedRevision)
-      .map((entry) => entry.selectedRevision!);
-    const { error } = await getPortalDb().from("creative_reviews").insert(
-      selected.map((revision) => ({
-        project_id: bundle.project.id,
-        revision_id: revision.id,
-        gate_key: "production-package",
-        decision: "changes_requested",
-        reviewer_type: "client",
-        reviewer_id: input.clientId,
-        reviewer_label: input.reviewerLabel,
-        note: input.note!.trim(),
-        content_hash: revision.content_hash,
-      }))
-    );
-    throwIfError(error);
-    await getPortalDb()
-      .from("creative_artifacts")
-      .update({ state: "changes_requested" })
-      .eq("project_id", bundle.project.id)
-      .eq("required", true);
-  }
-  return transitioned;
+  return decideProjectPackage({
+    bundle,
+    decision: input.decision,
+    reviewerType: "client",
+    reviewerId: input.clientId,
+    reviewerLabel: input.reviewerLabel,
+    note: input.note,
+  });
 }
 
 export async function launchCreativeProject(id: string): Promise<{ created: number }> {
@@ -635,6 +664,12 @@ export async function launchCreativeProject(id: string): Promise<{ created: numb
   );
   if (!master) {
     throw new Error("Add a cleared final master URL in Assets & Rights before distribution");
+  }
+  if (
+    master.allowed_channels.length > 0 &&
+    bundle.project.channels.some((channel) => !master.allowed_channels.includes(channel))
+  ) {
+    throw new Error("The final master license does not cover every selected distribution channel");
   }
   const captions = bundle.artifacts.find(
     (entry) => entry.artifact.artifact_type === "caption_set"

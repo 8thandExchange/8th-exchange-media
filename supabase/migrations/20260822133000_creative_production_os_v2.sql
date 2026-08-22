@@ -215,10 +215,14 @@ create unique index if not exists portal_social_posts_creative_content_unique
 
 create index if not exists creative_projects_client_created_idx
   on public.creative_projects(client_id, created_at desc);
-create index if not exists creative_projects_campaign_idx
-  on public.creative_projects(growth_campaign_id);
 create index if not exists creative_artifacts_project_idx
   on public.creative_artifacts(project_id, sort_order);
+create index if not exists creative_artifacts_current_revision_idx
+  on public.creative_artifacts(current_revision_id);
+create index if not exists creative_artifacts_selected_revision_idx
+  on public.creative_artifacts(selected_revision_id);
+create index if not exists creative_generation_runs_project_idx
+  on public.creative_generation_runs(project_id);
 create index if not exists creative_revisions_generation_run_idx
   on public.creative_artifact_revisions(generation_run_id);
 create index if not exists creative_reviews_project_idx

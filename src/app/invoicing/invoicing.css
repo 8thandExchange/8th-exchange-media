@@ -1704,6 +1704,26 @@
   text-transform: uppercase;
 }
 
+.prod-shot-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.prod-shot-row {
+  border: 1px solid var(--inv-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.prod-shot-row legend {
+  padding: 0 6px;
+  color: var(--inv-text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .prod-storyboard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

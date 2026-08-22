@@ -77,6 +77,12 @@ export async function POST(
       // Staff approval — for the agency's own brands there is no client
       // to review, so staff can approve directly.
       case "approve": {
+        if (existing.client_id) {
+          return NextResponse.json(
+            { error: "Client-owned posts must be approved in that client's portal" },
+            { status: 409 }
+          );
+        }
         const post = await decidePipelinePost(id, "approved", "staff", body.note);
         return NextResponse.json({ ok: true, post });
       }

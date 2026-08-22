@@ -18,6 +18,10 @@ export function ProductionRightsForm({
   const [rightsBasis, setRightsBasis] = useState("client_owned");
   const [status, setStatus] = useState("pending");
   const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [allowedChannels, setAllowedChannels] = useState<string[]>(channels);
+  const [territories, setTerritories] = useState("United States");
+  const [modificationAllowed, setModificationAllowed] = useState(true);
+  const [expiresAt, setExpiresAt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,9 +42,10 @@ export function ProductionRightsForm({
             ownerName,
             rightsBasis,
             status,
-            allowedChannels: channels,
-            allowedTerritories: ["United States"],
-            modificationAllowed: true,
+            allowedChannels,
+            allowedTerritories: territories.split(",").map((item) => item.trim()).filter(Boolean),
+            modificationAllowed,
+            expiresAt,
             evidenceUrl,
           }),
         }
@@ -117,6 +122,39 @@ export function ProductionRightsForm({
           <label htmlFor="rights-evidence">License/release evidence URL</label>
           <input id="rights-evidence" className="inv-input" type="url" value={evidenceUrl} onChange={(event) => setEvidenceUrl(event.target.value)} placeholder="https://…" />
         </div>
+        <fieldset className="inv-field inv-form-grid-full">
+          <legend>Licensed channels</legend>
+          <div className="growth-check-grid">
+            {channels.map((channel) => (
+              <label key={channel} className="growth-check">
+                <input
+                  type="checkbox"
+                  checked={allowedChannels.includes(channel)}
+                  onChange={() =>
+                    setAllowedChannels((current) =>
+                      current.includes(channel)
+                        ? current.filter((item) => item !== channel)
+                        : [...current, channel]
+                    )
+                  }
+                />
+                <span>{channel}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div className="inv-field">
+          <label htmlFor="rights-territories">Territories · comma separated</label>
+          <input id="rights-territories" className="inv-input" required value={territories} onChange={(event) => setTerritories(event.target.value)} />
+        </div>
+        <div className="inv-field">
+          <label htmlFor="rights-expires">License expiration</label>
+          <input id="rights-expires" className="inv-input" type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} />
+        </div>
+        <label className="growth-check inv-form-grid-full">
+          <input type="checkbox" checked={modificationAllowed} onChange={(event) => setModificationAllowed(event.target.checked)} />
+          <span>License permits editing, cropping, and derivative versions</span>
+        </label>
       </div>
       <button type="submit" className="inv-btn inv-btn-secondary" disabled={busy} style={{ marginTop: 14 }}>
         {busy ? "Registering…" : "Register asset & rights"}

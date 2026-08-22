@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
-import { addCreativeRightsAsset } from "@/lib/production/service";
+import {
+  addCreativeRightsAsset,
+  deleteCreativeRightsAsset,
+  updateCreativeRightsAsset,
+} from "@/lib/production/service";
 
 const rightsInput = z.object({
   label: z.string().trim().min(2).max(160),
@@ -36,6 +40,13 @@ const rightsInput = z.object({
   restrictions: z.string().trim().max(1000).optional(),
 });
 
+const rightsUpdateInput = z.object({
+  assetId: z.string().uuid(),
+  status: z.enum(["pending", "cleared", "restricted", "expired", "revoked"]),
+  evidenceUrl: z.union([z.string().url(), z.literal("")]).optional(),
+  restrictions: z.string().trim().max(1000).optional(),
+});
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -64,5 +75,60 @@ export async function POST(
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not register production asset";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireInvoicingAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const parsed = rightsUpdateInput.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Rights update is invalid" },
+      { status: 400 }
+    );
+  }
+  try {
+    const { id } = await params;
+    const asset = await updateCreativeRightsAsset({
+      projectId: id,
+      ...parsed.data,
+      evidenceUrl: parsed.data.evidenceUrl || undefined,
+    });
+    return NextResponse.json({ ok: true, asset });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not update asset rights";
+    return NextResponse.json({ error: message }, { status: 409 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireInvoicingAuth();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const parsed = z
+    .object({ assetId: z.string().uuid() })
+    .safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Asset id is invalid" }, { status: 400 });
+  }
+  try {
+    const { id } = await params;
+    await deleteCreativeRightsAsset({ projectId: id, assetId: parsed.data.assetId });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not remove asset";
+    return NextResponse.json({ error: message }, { status: 409 });
   }
 }

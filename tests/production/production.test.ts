@@ -276,6 +276,43 @@ describe("Creative Production governance", () => {
     expect(results.find((item) => item.ruleKey === "rights-clearance")?.status).toBe("failed");
   });
 
+  it("blocks licenses that do not cover every distribution channel", () => {
+    const rights = [
+      {
+        id: "rights",
+        project_id: project.id,
+        client_id: null,
+        label: "Facebook-only master",
+        asset_type: "final_master",
+        source_url: "https://example.com/master.mp4",
+        owner_name: "Client",
+        rights_basis: "licensed",
+        status: "cleared",
+        allowed_channels: ["facebook"],
+        allowed_territories: ["United States"],
+        modification_allowed: true,
+        valid_from: null,
+        expires_at: null,
+        evidence_url: "https://example.com/license",
+        restrictions: null,
+        cleared_by: "staff",
+        cleared_at: "2026-08-22T00:00:00.000Z",
+        created_at: "2026-08-22T00:00:00.000Z",
+        updated_at: "2026-08-22T00:00:00.000Z",
+      },
+    ] satisfies CreativeRightsAsset[];
+    const results = runCreativeQa({
+      project,
+      artifacts: generated().map((item) => ({
+        artifactType: item.artifactType,
+        content: item.content,
+      })),
+      rights,
+    });
+    expect(results.find((item) => item.ruleKey === "rights-clearance")?.status).toBe("passed");
+    expect(results.find((item) => item.ruleKey === "rights-channel-scope")?.status).toBe("failed");
+  });
+
   it("rejects illegal project transitions", () => {
     expect(CREATIVE_TRANSITIONS.planning).toContain("in_production");
     expect(CREATIVE_TRANSITIONS.planning).not.toContain("approved");

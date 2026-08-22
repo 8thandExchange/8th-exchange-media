@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 async function loadProjects(clientId: string) {
   try {
     const projects = (await listCreativeProjects(clientId)).filter(
-      (project) => project.client_visible && project.status !== "archived"
+      (project) =>
+        project.client_visible &&
+        ["in_review", "approved", "released", "completed"].includes(project.status)
     );
     return { projects, error: "" };
   } catch (error) {

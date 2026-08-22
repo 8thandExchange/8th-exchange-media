@@ -4,11 +4,14 @@ import { ProductionReviewActions } from "@/components/production/ProductionRevie
 import { requirePortalClient } from "@/lib/portal/auth";
 import { getCreativeProjectBundle } from "@/lib/production/service";
 import type {
+  CaptionSetContent,
   HookSetContent,
+  ProductionBriefContent,
   ScriptContent,
   SeoBriefContent,
   ShotListContent,
   StoryboardContent,
+  ThumbnailBriefContent,
 } from "@/lib/production/types";
 
 export const dynamic = "force-dynamic";
@@ -31,14 +34,23 @@ export default async function ClientProductionDetailPage({
   } catch {
     notFound();
   }
-  if (bundle.project.client_id !== clientId || !bundle.project.client_visible) notFound();
+  if (
+    bundle.project.client_id !== clientId ||
+    !bundle.project.client_visible ||
+    !["in_review", "approved", "released", "completed"].includes(bundle.project.status)
+  ) {
+    notFound();
+  }
   const entry = (type: string) =>
     bundle.artifacts.find((item) => item.artifact.artifact_type === type)!;
+  const brief = entry("production_brief").selectedRevision?.content as ProductionBriefContent;
   const hooks = entry("hook_set").selectedRevision?.content as HookSetContent;
   const script = entry("script").selectedRevision?.content as ScriptContent;
   const shots = entry("shot_list").selectedRevision?.content as ShotListContent;
   const storyboard = entry("storyboard").selectedRevision?.content as StoryboardContent;
   const seo = entry("seo_brief").selectedRevision?.content as SeoBriefContent;
+  const captions = entry("caption_set").selectedRevision?.content as CaptionSetContent;
+  const thumbnail = entry("thumbnail_brief").selectedRevision?.content as ThumbnailBriefContent;
   const selectedHook = hooks.hooks.find((hook) => hook.selected);
 
   return (
@@ -71,12 +83,43 @@ export default async function ClientProductionDetailPage({
       <div className="space-y-6">
         <section className="inv-card">
           <div className="inv-detail-section">
+            <div className="inv-detail-label">Frozen production brief</div>
+            <div className="prod-client-summary">
+              <div><strong>{brief.objective}</strong><span>objective</span></div>
+              <div><strong>{brief.audience}</strong><span>audience</span></div>
+              <div><strong>{brief.offer}</strong><span>offer</span></div>
+              <div><strong>{brief.primaryCta}</strong><span>primary action</span></div>
+            </div>
+            <div className="growth-hypothesis">
+              <span>Evidence</span>
+              <p>{String(brief.evidence.finding ?? bundle.opportunity?.description ?? "Approved campaign evidence")}</p>
+            </div>
+            <details className="growth-variants">
+              <summary>Deliverables and guardrails included in this approval</summary>
+              <div><strong>Deliverables</strong>{brief.deliverables.map((item) => <p key={item}>{item}</p>)}</div>
+              <div><strong>Guardrails</strong>{brief.guardrails.map((item) => <p key={item}>{item}</p>)}</div>
+            </details>
+          </div>
+        </section>
+
+        <section className="inv-card">
+          <div className="inv-detail-section">
             <div className="inv-detail-label">Selected creative direction</div>
             <div className="prod-client-hook">
               <span>{selectedHook?.framework ?? "hook"}</span>
               <strong>{selectedHook?.spokenText}</strong>
               <p>On screen: {selectedHook?.onScreenText}</p>
             </div>
+            <details className="growth-variants" style={{ marginTop: 14 }}>
+              <summary>Review every hook option</summary>
+              {hooks.hooks.map((hook) => (
+                <div key={hook.id}>
+                  <strong>{hook.framework}{hook.selected ? " · selected" : ""}</strong>
+                  <p>{hook.spokenText}</p>
+                  <p>On screen: {hook.onScreenText}</p>
+                </div>
+              ))}
+            </details>
           </div>
         </section>
 
@@ -94,6 +137,16 @@ export default async function ClientProductionDetailPage({
               </article>
             ))}
           </div>
+          {script.disclaimers.length > 0 ? (
+            <div className="inv-card" style={{ marginTop: 12 }}>
+              <div className="inv-detail-section">
+                <div className="inv-detail-label">Script disclaimers</div>
+                <ul className="growth-guardrails">
+                  {script.disclaimers.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section>
@@ -110,6 +163,17 @@ export default async function ClientProductionDetailPage({
                   <div className="prod-frame-copy">
                     <p>{frame.compositionNote}</p>
                     <span>{shot?.framing.replaceAll("_", " ")} · {shot?.location}</span>
+                    {shot ? (
+                      <details className="growth-variants">
+                        <summary>Full shot metadata</summary>
+                        <p><strong>Subject:</strong> {shot.subject}</p>
+                        <p><strong>Action:</strong> {shot.action}</p>
+                        <p><strong>Audio:</strong> {shot.audio}</p>
+                        <p><strong>Equipment:</strong> {shot.equipment}</p>
+                        <p><strong>Talent:</strong> {shot.talent.join(", ") || "None specified"}</p>
+                        <p><strong>Props:</strong> {shot.props.join(", ") || "None specified"}</p>
+                      </details>
+                    ) : null}
                   </div>
                 </article>
               );
@@ -126,6 +190,46 @@ export default async function ClientProductionDetailPage({
               {seo.outline.map((item) => (
                 <div key={item.heading}><strong>{item.heading}</strong><p>{item.purpose}</p></div>
               ))}
+            </div>
+            <details className="growth-variants" style={{ marginTop: 14 }}>
+              <summary>Titles, descriptions, internal links, schema & FAQ</summary>
+              <div><strong>Title options</strong>{seo.titleOptions.map((item) => <p key={item}>{item}</p>)}</div>
+              <div><strong>Meta descriptions</strong>{seo.metaDescriptions.map((item) => <p key={item}>{item}</p>)}</div>
+              <div><strong>Internal links</strong>{seo.internalLinks.map((item) => <p key={item.url}>{item.anchor} → {item.url}</p>)}</div>
+              <div><strong>Schema recommendations</strong>{seo.schemaRecommendations.map((item) => <p key={item}>{item}</p>)}</div>
+              <div><strong>FAQ questions</strong>{seo.faqQuestions.map((item) => <p key={item}>{item}</p>)}</div>
+            </details>
+          </div>
+        </section>
+
+        <section className="prod-two-column">
+          <div className="inv-card">
+            <div className="inv-detail-section">
+              <div className="inv-detail-label">Approved channel copy</div>
+              <div className="space-y-3" style={{ marginTop: 12 }}>
+                {captions.variants.map((variant) => (
+                  <details key={variant.key} className="prod-copy-card">
+                    <summary>{variant.channel} · {variant.key}</summary>
+                    <p>{variant.copy}</p>
+                    <p><strong>CTA:</strong> {variant.cta}</p>
+                    <p><strong>Tracked URL:</strong> {variant.trackedUrl}</p>
+                    <p><strong>Alt text:</strong> {variant.altText}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="inv-card">
+            <div className="inv-detail-section">
+              <div className="inv-detail-label">Thumbnail brief</div>
+              <div className="prod-thumbnail">
+                <span>Headline</span>
+                <strong>{thumbnail.headline}</strong>
+              </div>
+              <p className="growth-post-copy"><strong>Visual:</strong> {thumbnail.visualFocus}</p>
+              <p className="growth-post-copy"><strong>Composition:</strong> {thumbnail.composition}</p>
+              <p className="growth-post-copy"><strong>Contrast:</strong> {thumbnail.contrastPlan}</p>
+              <p className="growth-post-copy"><strong>Accessibility:</strong> {thumbnail.altText}</p>
             </div>
           </div>
         </section>

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductionProjectActions } from "@/components/production/ProductionProjectActions";
+import { ProductionRightsActions } from "@/components/production/ProductionRightsActions";
 import { ProductionRightsForm } from "@/components/production/ProductionRightsForm";
+import { SeoBriefEditor } from "@/components/production/SeoBriefEditor";
+import { ShotPlanEditor } from "@/components/production/ShotPlanEditor";
 import { ScriptLabEditor } from "@/components/production/ScriptLabEditor";
 import { getCreativeProjectBundle } from "@/lib/production/service";
 import type {
@@ -53,6 +56,7 @@ export default async function ProductionProjectPage({
   const repurposed = artifact("repurposed_content")!.currentRevision.content as RepurposedContent;
   const latestQa = qaRuns[0] ?? null;
   const editable = ["planning", "in_production", "changes_requested"].includes(project.status);
+  const rightsEditable = !["completed", "archived"].includes(project.status);
   const stageIndex = STAGES.indexOf(
     project.status === "changes_requested" ? "in_production" : project.status as (typeof STAGES)[number]
   );
@@ -104,25 +108,13 @@ export default async function ProductionProjectPage({
           <section>
             <div className="inv-section-heading">
               <div><h2>Shot plan</h2><p>Every required script beat maps to a production-ready shot.</p></div>
-              <span className="inv-badge inv-badge-draft">{shots.shots.length} shots</span>
             </div>
-            <div className="inv-table-wrap">
-              <table className="inv-table">
-                <thead><tr><th>#</th><th>Framing</th><th>Subject & action</th><th>Location</th><th>Audio</th><th>Time</th></tr></thead>
-                <tbody>
-                  {shots.shots.map((shot) => (
-                    <tr key={shot.id}>
-                      <td>{shot.shotNumber}</td>
-                      <td><span className={`inv-badge ${shot.priority === "required" ? "inv-badge-open" : "inv-badge-draft"}`}>{shot.framing.replaceAll("_", " ")}</span></td>
-                      <td><div className="inv-table-primary">{shot.subject}</div><div className="inv-table-secondary">{shot.action}</div></td>
-                      <td>{shot.location}</td>
-                      <td>{shot.audio}</td>
-                      <td>{shot.estimatedSeconds}s</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ShotPlanEditor
+              projectId={project.id}
+              initial={shots}
+              revision={artifact("shot_list")!.currentRevision.revision_number}
+              editable={editable}
+            />
           </section>
 
           <section>
@@ -146,30 +138,12 @@ export default async function ProductionProjectPage({
           </section>
 
           <section className="prod-two-column">
-            <div className="inv-card">
-              <div className="inv-detail-section">
-                <div className="inv-detail-label">SEO content brief</div>
-                <h3 className="prod-section-title">{seo.primaryKeyword.term}</h3>
-                <p className="inv-page-subtitle">{seo.audienceQuestion}</p>
-                <dl className="growth-meta-list">
-                  <div><dt>Intent</dt><dd>{seo.searchIntent}</dd></div>
-                  <div><dt>Slug</dt><dd>/{seo.proposedSlug}</dd></div>
-                  <div><dt>Keyword source</dt><dd>{seo.primaryKeyword.source}</dd></div>
-                </dl>
-                <div className="prod-outline">
-                  {seo.outline.map((item) => (
-                    <div key={item.heading}><strong>H{item.level} · {item.heading}</strong><p>{item.purpose}</p></div>
-                  ))}
-                </div>
-                <details className="growth-variants">
-                  <summary>Titles, descriptions, links & FAQ</summary>
-                  <div><strong>Titles</strong>{seo.titleOptions.map((title) => <p key={title}>{title}</p>)}</div>
-                  <div><strong>Descriptions</strong>{seo.metaDescriptions.map((description) => <p key={description}>{description}</p>)}</div>
-                  <div><strong>Internal links</strong>{seo.internalLinks.map((link) => <p key={link.url}>{link.anchor} → {link.url}</p>)}</div>
-                  <div><strong>FAQ</strong>{seo.faqQuestions.map((question) => <p key={question}>{question}</p>)}</div>
-                </details>
-              </div>
-            </div>
+            <SeoBriefEditor
+              projectId={project.id}
+              initial={seo}
+              revision={artifact("seo_brief")!.currentRevision.revision_number}
+              editable={editable}
+            />
 
             <div className="inv-card">
               <div className="inv-detail-section">
@@ -223,10 +197,10 @@ export default async function ProductionProjectPage({
               </p>
               <div className="inv-table-wrap" style={{ marginTop: 14 }}>
                 <table className="inv-table">
-                  <thead><tr><th>Asset</th><th>Type</th><th>Owner</th><th>Basis</th><th>Status</th><th /></tr></thead>
+                  <thead><tr><th>Asset</th><th>Type</th><th>Owner</th><th>Basis</th><th>Status</th><th>Rights</th><th /></tr></thead>
                   <tbody>
                     {rights.length === 0 ? (
-                      <tr><td colSpan={6} className="inv-table-empty">No external production assets registered yet.</td></tr>
+                      <tr><td colSpan={7} className="inv-table-empty">No external production assets registered yet.</td></tr>
                     ) : rights.map((item) => (
                       <tr key={item.id}>
                         <td className="inv-table-primary">{item.label}</td>
@@ -234,13 +208,14 @@ export default async function ProductionProjectPage({
                         <td>{item.owner_name}</td>
                         <td>{item.rights_basis.replaceAll("_", " ")}</td>
                         <td><span className={`inv-badge ${item.status === "cleared" ? "inv-badge-paid" : "inv-badge-overdue"}`}>{item.status}</span></td>
+                        <td>{rightsEditable ? <ProductionRightsActions projectId={project.id} assetId={item.id} status={item.status} /> : null}</td>
                         <td><a href={item.source_url} target="_blank" rel="noopener noreferrer" className="inv-link">Open ↗</a></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {editable ? <div style={{ marginTop: 18 }}><ProductionRightsForm projectId={project.id} channels={project.channels} /></div> : null}
+              {rightsEditable ? <div style={{ marginTop: 18 }}><ProductionRightsForm projectId={project.id} channels={project.channels} /></div> : null}
             </div>
           </section>
 

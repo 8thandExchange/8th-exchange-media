@@ -399,6 +399,12 @@ export function runCreativeQa(input: {
   const expiredRights = input.rights.filter(
     (asset) => asset.expires_at && new Date(asset.expires_at).getTime() < Date.now()
   );
+  const scopeViolations = input.rights.filter(
+    (asset) =>
+      asset.status === "cleared" &&
+      asset.allowed_channels.length > 0 &&
+      input.project.channels.some((channel) => !asset.allowed_channels.includes(channel))
+  );
 
   const findings: QaFinding[] = [
     {
@@ -471,6 +477,19 @@ export function runCreativeQa(input: {
       status: pendingRights.length === 0 && expiredRights.length === 0 ? "passed" : "failed",
       message: "Every registered production asset is cleared and unexpired.",
       evidence: { pending: pendingRights.map((asset) => asset.label), expired: expiredRights.map((asset) => asset.label) },
+    },
+    {
+      ruleKey: "rights-channel-scope",
+      severity: "blocking",
+      status: scopeViolations.length === 0 ? "passed" : "failed",
+      message: "Cleared asset licenses cover every selected distribution channel.",
+      evidence: {
+        channels: input.project.channels,
+        invalidAssets: scopeViolations.map((asset) => ({
+          label: asset.label,
+          allowedChannels: asset.allowed_channels,
+        })),
+      },
     },
     {
       ruleKey: "seo-metadata",
