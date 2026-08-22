@@ -6,6 +6,7 @@ import {
   runCreativeQa,
 } from "@/lib/production/generation";
 import { CREATIVE_TRANSITIONS } from "@/lib/production/service";
+import { parseCreativeContent } from "@/lib/production/schemas";
 import type { GrowthCampaign, GrowthOpportunity } from "@/lib/growth/types";
 import type {
   CreativeProject,
@@ -162,6 +163,9 @@ describe("Creative Production recipes", () => {
       "thumbnail_brief",
       "repurposed_content",
     ]);
+    expect(() =>
+      artifacts.forEach((item) => parseCreativeContent(item.artifactType, item.content))
+    ).not.toThrow();
     expect(contentHash(artifacts)).toBe(contentHash(generated()));
   });
 

@@ -7,7 +7,6 @@ import {
   CREATIVE_RECIPE_VERSION,
   generateCreativePackage,
   runCreativeQa,
-  type GeneratedArtifact,
 } from "@/lib/production/generation";
 import { compileBrandSnapshot } from "@/lib/growth/brand";
 import { getCampaignBundle } from "@/lib/growth/service";
@@ -171,6 +170,7 @@ export async function createCreativeProject(input: {
       .select("id")
       .single();
     throwIfError(runError);
+    if (!run) throw new Error("Creative generation run could not be recorded");
 
     for (const item of generated) {
       const { data: artifact, error: artifactError } = await db
@@ -482,21 +482,43 @@ export async function transitionCreativeProject(
         `Resolve ${blockers.length} blocking QA check${blockers.length === 1 ? "" : "s"} before client review`
       );
     }
-    const { error } = await getPortalDb()
-      .from("creative_projects")
-      .update({ client_visible: Boolean(bundle.project.client_id) })
-      .eq("id", id);
-    throwIfError(error);
-    await getPortalDb()
-      .from("creative_artifacts")
-      .update({ state: "in_review" })
-      .eq("project_id", id)
-      .eq("required", true);
   }
   if (next === "changes_requested" && !note?.trim()) {
     throw new Error("Add a specific change request before returning production");
   }
+  if (next === "approved" && bundle.project.client_id) {
+    throw new Error("The client must approve this exact production package in their portal");
+  }
   const transitioned = await atomicTransition(bundle.project, next, note, "staff");
+  if (next === "in_review") {
+    const { error: visibilityError } = await getPortalDb()
+      .from("creative_projects")
+      .update({ client_visible: Boolean(bundle.project.client_id) })
+      .eq("id", id);
+    throwIfError(visibilityError);
+    const { error: artifactError } = await getPortalDb()
+      .from("creative_artifacts")
+      .update({ state: "in_review" })
+      .eq("project_id", id)
+      .eq("required", true);
+    throwIfError(artifactError);
+  }
+  if (next === "changes_requested") {
+    const { error } = await getPortalDb()
+      .from("creative_artifacts")
+      .update({ state: "changes_requested" })
+      .eq("project_id", id)
+      .eq("required", true);
+    throwIfError(error);
+  }
+  if (next === "in_production" && bundle.project.status === "changes_requested") {
+    const { error } = await getPortalDb()
+      .from("creative_artifacts")
+      .update({ state: "working" })
+      .eq("project_id", id)
+      .eq("required", true);
+    throwIfError(error);
+  }
   if (next === "approved") {
     await recordProjectApproval(bundle, "staff", "8E Studio", note);
   }
@@ -606,7 +628,7 @@ export async function launchCreativeProject(id: string): Promise<{ created: numb
   if (!["approved", "released"].includes(bundle.project.status)) {
     throw new Error("The exact production package must be approved before distribution drafts");
   }
-  const qa = bundle.qaRuns[0] ?? (await executeCreativeQa(bundle));
+  const qa = await executeCreativeQa(bundle);
   if (qa.status !== "passed") throw new Error("Run and pass production QA before distribution");
   const master = bundle.rights.find(
     (asset) => asset.asset_type === "final_master" && asset.status === "cleared"

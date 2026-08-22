@@ -206,7 +206,8 @@ alter table public.portal_social_posts
   add column if not exists creative_source_revision_id uuid
     references public.creative_artifact_revisions(id) on delete set null,
   add column if not exists creative_approved_hash text,
-  add column if not exists creative_content_key text;
+  add column if not exists creative_content_key text,
+  add column if not exists approval_content_hash text;
 
 create unique index if not exists portal_social_posts_creative_content_unique
   on public.portal_social_posts(creative_project_id, creative_content_key)

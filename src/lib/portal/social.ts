@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { getPortalDb } from "@/lib/portal/db";
 import {
   createSocialPost,
@@ -69,12 +70,37 @@ export interface SocialPostRow {
   creative_source_revision_id: string | null;
   creative_approved_hash: string | null;
   creative_content_key: string | null;
+  approval_content_hash: string | null;
   created_at: string;
   updated_at: string;
 }
 
 function throwIfError(error: { message: string } | null): void {
   if (error) throw new Error(error.message);
+}
+
+function approvalContentHash(
+  post: Pick<
+    SocialPostRow,
+    "summary" | "variants" | "media" | "account_ids" | "schedule_at" | "category"
+  >
+): string {
+  const variants = Object.fromEntries(
+    Object.entries(post.variants ?? {}).sort(([left], [right]) => left.localeCompare(right))
+  );
+  return crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        summary: post.summary,
+        variants,
+        media: post.media,
+        accountIds: [...post.account_ids].sort(),
+        scheduleAt: post.schedule_at,
+        category: post.category,
+      })
+    )
+    .digest("hex");
 }
 
 /* ── Account registry (synced from GHL) ──────────── */
@@ -241,6 +267,10 @@ export async function editPipelinePost(
   if (fields.accountIds !== undefined) patch.account_ids = fields.accountIds;
   if (fields.scheduleAt !== undefined) patch.schedule_at = fields.scheduleAt;
   if (fields.category !== undefined) patch.category = fields.category;
+  patch.approval_content_hash = null;
+  patch.approved_by = null;
+  patch.approved_at = null;
+  if (existing.creative_project_id) patch.creative_approved_hash = null;
   return updatePost(id, patch);
 }
 
@@ -261,6 +291,7 @@ export async function decidePipelinePost(
     approved_by: by,
     approved_at: new Date().toISOString(),
     approval_note: note ?? null,
+    approval_content_hash: decision === "approved" ? approvalContentHash(existing) : null,
   });
 }
 
@@ -295,6 +326,13 @@ export async function pushPipelinePostToGhl(
   if (!post) throw new Error("Unknown post");
   if (!["approved", "failed"].includes(post.status)) {
     throw new Error("Only approved posts can be handed to Go High Level");
+  }
+  const currentHash = approvalContentHash(post);
+  if (post.approval_content_hash && post.approval_content_hash !== currentHash) {
+    throw new Error("This post changed after approval; submit the current version for approval again");
+  }
+  if (post.creative_project_id && !post.approval_content_hash) {
+    throw new Error("This production draft needs exact-content approval before publishing");
   }
   if (post.account_ids.length === 0) {
     throw new Error("Pick at least one social account before publishing");

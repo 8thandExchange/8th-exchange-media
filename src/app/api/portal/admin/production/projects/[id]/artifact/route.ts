@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
+import { parseCreativeContent } from "@/lib/production/schemas";
 import { createArtifactRevision } from "@/lib/production/service";
-import type { CreativeContent } from "@/lib/production/types";
 
 const artifactInput = z.object({
   artifactType: z.enum([
@@ -37,10 +37,14 @@ export async function PUT(
   }
   try {
     const { id } = await params;
+    const content = parseCreativeContent(
+      parsed.data.artifactType,
+      parsed.data.content
+    );
     const revision = await createArtifactRevision({
       projectId: id,
       artifactType: parsed.data.artifactType,
-      content: parsed.data.content as CreativeContent,
+      content,
     });
     return NextResponse.json({ ok: true, revision });
   } catch (error) {
