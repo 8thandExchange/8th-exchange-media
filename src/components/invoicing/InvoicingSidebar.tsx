@@ -16,6 +16,7 @@ const NAV_GROUPS: { section: string; items: { href: string; label: string; exact
     items: [
       { href: "/invoicing", label: "Overview", exact: true },
       { href: "/invoicing/growth", label: "Growth OS" },
+      { href: "/invoicing/production", label: "Creative Production" },
     ],
   },
   {

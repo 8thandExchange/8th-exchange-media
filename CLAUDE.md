@@ -32,9 +32,9 @@ products, or payment links. `lib/invoicing/service.ts` calls Stripe live on ever
 and `stripe-mappers.ts` shapes the result. Don't add a caching table; do expect list pages
 to be slow-ish and paginated at Stripe's limits.
 
-**Supabase holds everything Stripe can't.** Tables: `portal_clients`, `portal_requests`,
-`portal_request_updates`, `portal_request_files`, `portal_login_codes`, `onboarding_leads`,
-`brand_kits`. All have RLS on with **no policies** — the service-role client in
+**Supabase holds everything Stripe can't.** Tables include the `portal_*` client/work/social
+tables, `onboarding_leads`, `brand_kits`, the `growth_*` audit/campaign/measurement tables,
+and the `creative_*` production/revision/rights/QA tables. All have RLS on with **no policies** — the service-role client in
 `lib/portal/db.ts` is the only way in, so it is server-only and must never reach the
 browser. `portal_clients.stripe_customer_id` is the single link between the two stores.
 

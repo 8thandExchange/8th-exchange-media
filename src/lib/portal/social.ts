@@ -65,6 +65,10 @@ export interface SocialPostRow {
   growth_campaign_id: string | null;
   growth_asset_id: string | null;
   growth_content_key: string | null;
+  creative_project_id: string | null;
+  creative_source_revision_id: string | null;
+  creative_approved_hash: string | null;
+  creative_content_key: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -147,6 +151,10 @@ export async function createPipelinePost(input: {
   growthCampaignId?: string;
   growthAssetId?: string;
   growthContentKey?: string;
+  creativeProjectId?: string;
+  creativeSourceRevisionId?: string;
+  creativeApprovedHash?: string;
+  creativeContentKey?: string;
 }): Promise<SocialPostRow> {
   const { data, error } = await getPortalDb()
     .from("portal_social_posts")
@@ -163,6 +171,10 @@ export async function createPipelinePost(input: {
       growth_campaign_id: input.growthCampaignId ?? null,
       growth_asset_id: input.growthAssetId ?? null,
       growth_content_key: input.growthContentKey ?? null,
+      creative_project_id: input.creativeProjectId ?? null,
+      creative_source_revision_id: input.creativeSourceRevisionId ?? null,
+      creative_approved_hash: input.creativeApprovedHash ?? null,
+      creative_content_key: input.creativeContentKey ?? null,
     })
     .select("*")
     .single();
@@ -217,6 +229,11 @@ export async function editPipelinePost(
     category?: string | null;
   }
 ): Promise<SocialPostRow> {
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "rejected"].includes(existing.status)) {
+    throw new Error("Approved or published content cannot be edited; create a new draft instead");
+  }
   const patch: Record<string, unknown> = {};
   if (fields.summary !== undefined) patch.summary = fields.summary;
   if (fields.variants !== undefined) patch.variants = fields.variants;
@@ -234,6 +251,11 @@ export async function decidePipelinePost(
   by: string,
   note?: string
 ): Promise<SocialPostRow> {
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "pending_approval"].includes(existing.status)) {
+    throw new Error("This post is not awaiting an approval decision");
+  }
   return updatePost(id, {
     status: decision,
     approved_by: by,
@@ -243,6 +265,11 @@ export async function decidePipelinePost(
 }
 
 export async function submitForApproval(id: string): Promise<SocialPostRow> {
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "rejected"].includes(existing.status)) {
+    throw new Error("Only editable drafts can be submitted for approval");
+  }
   return updatePost(id, { status: "pending_approval" });
 }
 
@@ -266,6 +293,9 @@ export async function pushPipelinePostToGhl(
 ): Promise<SocialPostRow> {
   const post = await getPipelinePost(id);
   if (!post) throw new Error("Unknown post");
+  if (!["approved", "failed"].includes(post.status)) {
+    throw new Error("Only approved posts can be handed to Go High Level");
+  }
   if (post.account_ids.length === 0) {
     throw new Error("Pick at least one social account before publishing");
   }

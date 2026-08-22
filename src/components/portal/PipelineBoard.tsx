@@ -766,6 +766,15 @@ export function PipelineBoard({
                           View originating campaign →
                         </Link>
                       ) : null}
+                      {post.creative_project_id ? (
+                        <Link
+                          href={`/invoicing/production/${post.creative_project_id}`}
+                          className="inv-link"
+                          style={{ display: "inline-block", fontSize: "11px", marginTop: "6px", marginLeft: "10px" }}
+                        >
+                          View production package →
+                        </Link>
+                      ) : null}
                       {post.status === "rejected" && post.approval_note ? (
                         <div className="inv-alert inv-alert-error" style={{ marginTop: "8px", marginBottom: 0 }}>
                           {post.approved_by}: {post.approval_note}
