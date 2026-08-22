@@ -112,8 +112,12 @@ async function requestOnce(url: URL): Promise<SafeResponse> {
           "User-Agent": USER_AGENT,
         },
         servername: url.hostname,
-        lookup: (_hostname, _options, callback) => {
-          callback(null, pinned.address, pinned.family);
+        lookup: (_hostname, options, callback) => {
+          if (typeof options === "object" && options.all) {
+            callback(null, [pinned]);
+          } else {
+            callback(null, pinned.address, pinned.family);
+          }
         },
       },
       (response) => {
@@ -188,6 +192,7 @@ function sameOriginUrl(raw: string, pageUrl: URL, siteOrigin: string): string | 
 
 function analyzeHtml(response: SafeResponse, siteOrigin: string): AuditPageInput {
   const $ = load(response.body);
+  const hasStructuredData = $('script[type="application/ld+json"]').length > 0;
   $("script, style, noscript, template, svg").remove();
 
   const pageUrl = response.url;
@@ -248,7 +253,7 @@ function analyzeHtml(response: SafeResponse, siteOrigin: string): AuditPageInput
       analyticsHtml.includes("plausible.io") ||
       analyticsHtml.includes("analytics"),
     hasOpenGraphImage: Boolean($('meta[property="og:image"]').attr("content")),
-    hasStructuredData: $('script[type="application/ld+json"]').length > 0,
+    hasStructuredData,
     hasViewport: Boolean($('meta[name="viewport"]').attr("content")),
     isNoIndex: /(?:^|,|\s)noindex(?:,|\s|$)/i.test(
       $('meta[name="robots"]').attr("content") ?? ""

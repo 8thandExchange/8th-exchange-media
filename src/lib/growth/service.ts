@@ -141,7 +141,9 @@ export async function getAuditBundle(id: string): Promise<{
     pages: (pages ?? []) as GrowthAuditPage[],
     opportunities: (opportunities ?? []).map((row) => {
       const joined = row.growth_audit_pages as { url?: string } | null;
-      const { growth_audit_pages: _page, ...opportunity } = row;
+      const opportunity = Object.fromEntries(
+        Object.entries(row).filter(([key]) => key !== "growth_audit_pages")
+      );
       return { ...opportunity, audit_page_url: joined?.url } as GrowthOpportunity;
     }),
   };
@@ -156,7 +158,9 @@ export async function getOpportunity(id: string): Promise<GrowthOpportunity | nu
   throwIfError(error);
   if (!data) return null;
   const joined = data.growth_audit_pages as { url?: string } | null;
-  const { growth_audit_pages: _page, ...opportunity } = data;
+  const opportunity = Object.fromEntries(
+    Object.entries(data).filter(([key]) => key !== "growth_audit_pages")
+  );
   return { ...opportunity, audit_page_url: joined?.url } as GrowthOpportunity;
 }
 

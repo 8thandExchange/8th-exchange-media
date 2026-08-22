@@ -7,6 +7,17 @@ import { requirePortalClient } from "@/lib/portal/auth";
 
 export const dynamic = "force-dynamic";
 
+async function loadClientCampaigns(clientId: string) {
+  try {
+    return { campaigns: await listCampaigns(clientId), error: "" };
+  } catch (error) {
+    return {
+      campaigns: [],
+      error: error instanceof Error ? error.message : "Performance data is unavailable",
+    };
+  }
+}
+
 export default async function ClientGrowthPage() {
   let clientId: string;
   try {
@@ -15,11 +26,7 @@ export default async function ClientGrowthPage() {
     redirect("/portal/login");
   }
 
-  let loadError = "";
-  const campaigns = await listCampaigns(clientId).catch((error) => {
-    loadError = error instanceof Error ? error.message : "Performance data is unavailable";
-    return [];
-  });
+  const { campaigns, error: loadError } = await loadClientCampaigns(clientId);
   const visible = campaigns.filter((campaign) => campaign.client_visible && campaign.status !== "archived");
   const bundles = (
     await Promise.allSettled(visible.map((campaign) => getCampaignBundle(campaign.id)))

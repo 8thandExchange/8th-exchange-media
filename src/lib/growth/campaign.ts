@@ -27,9 +27,16 @@ function channelVariant(
   channel: string,
   summary: string,
   cta: string,
-  destination: string
+  destination: string,
+  campaignKey: string
 ): string {
-  const base = `${summary}\n\n${cta}: ${destination}`;
+  const tracked = new URL(destination);
+  if (!tracked.searchParams.has("utm_source")) tracked.searchParams.set("utm_source", channel);
+  if (!tracked.searchParams.has("utm_medium")) tracked.searchParams.set("utm_medium", "organic_social");
+  if (!tracked.searchParams.has("utm_campaign")) {
+    tracked.searchParams.set("utm_campaign", `growth-${campaignKey.slice(0, 8)}`);
+  }
+  const base = `${summary}\n\n${cta}: ${tracked.toString()}`;
   if (channel === "x" || channel === "twitter") return trimSentence(base, 275);
   if (channel === "linkedin") return `${summary}\n\n${cta}: ${destination}`;
   if (channel === "instagram") return `${summary}\n\n${cta}. Link in bio.`;
@@ -52,7 +59,13 @@ function makePost(
     variants: Object.fromEntries(
       input.channels.map((channel) => [
         channel,
-        channelVariant(channel, summary, input.primaryCta, input.destinationUrl),
+        channelVariant(
+          channel,
+          summary,
+          input.primaryCta,
+          input.destinationUrl,
+          input.opportunity.id
+        ),
       ])
     ),
     assetTemplate: template,

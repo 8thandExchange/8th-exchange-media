@@ -15,6 +15,14 @@ function formatDate(value: string): string {
   });
 }
 
+function hostname(value: string): string {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value.replace(/^https?:\/\//, "").split("/")[0];
+  }
+}
+
 export default async function GrowthOperatingSystemPage() {
   let clients: Awaited<ReturnType<typeof listClients>> = [];
   let audits: Awaited<ReturnType<typeof listAudits>> = [];
@@ -103,7 +111,7 @@ export default async function GrowthOperatingSystemPage() {
                 audits.map((audit) => (
                   <tr key={audit.id}>
                     <td>
-                      <div className="inv-table-primary">{new URL(audit.website_url).hostname}</div>
+                      <div className="inv-table-primary">{hostname(audit.website_url)}</div>
                       <div className="inv-table-secondary">{audit.website_url}</div>
                     </td>
                     <td><span className={`inv-badge ${audit.status === "failed" ? "inv-badge-overdue" : audit.status === "running" ? "inv-badge-open" : "inv-badge-paid"}`}>{audit.status}</span></td>

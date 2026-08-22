@@ -46,9 +46,9 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  if (parsed.data.targetValue === parsed.data.baselineValue) {
+  if (parsed.data.targetValue <= parsed.data.baselineValue) {
     return NextResponse.json(
-      { error: "The target must be different from the baseline" },
+      { error: "The target must be greater than the baseline for this growth metric" },
       { status: 400 }
     );
   }

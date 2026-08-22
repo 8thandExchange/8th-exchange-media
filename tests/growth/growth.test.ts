@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isPublicIp, summarizeAudit } from "@/lib/growth/audit";
+import { ImageResponse } from "next/og";
+import { crawlWebsite, isPublicIp, summarizeAudit } from "@/lib/growth/audit";
 import { generateCampaignBrief } from "@/lib/growth/campaign";
+import { renderGrowthAsset } from "@/lib/growth/graphics";
 import { calculateCommercialMetrics, calculateMetricResult } from "@/lib/growth/reporting";
 import { priorityScore, scoreAudit } from "@/lib/growth/scoring";
 import type {
@@ -8,6 +10,7 @@ import type {
   BrandSnapshot,
   GrowthMetric,
   GrowthOpportunity,
+  GrowthAsset,
 } from "@/lib/growth/types";
 
 function page(overrides: Partial<AuditPageInput> = {}): AuditPageInput {
@@ -60,6 +63,18 @@ describe("audit network safety", () => {
     expect(isPublicIp("2606:4700:4700::1111")).toBe(true);
   });
 });
+
+const liveAudit = process.env.RUN_LIVE_AUDIT === "1" ? it : it.skip;
+liveAudit(
+  "audits the live 8E website through the production-safe crawler",
+  async () => {
+    const result = await crawlWebsite("https://8emedia.com", 5);
+    expect(result.pages.length).toBeGreaterThanOrEqual(1);
+    expect(result.pages[0].http_status).toBe(200);
+    expect(result.summary.healthyPages).toBeGreaterThanOrEqual(1);
+  },
+  60_000
+);
 
 describe("deterministic opportunity scoring", () => {
   it("uses the documented impact-confidence-effort formula", () => {
@@ -137,7 +152,46 @@ describe("campaign generation", () => {
     expect(brief.posts).toHaveLength(3);
     expect(brief.evidence.observed).toEqual({ recognizedCtas: [] });
     expect(brief.posts.every((post) => post.variants.facebook)).toBe(true);
+    expect(brief.posts[0].variants.facebook).toContain("utm_campaign=growth-opp");
     expect(brief.guardrails.some((rule) => rule.includes("guaranteed"))).toBe(true);
+  });
+
+  it("renders the generated creative system as PNG", async () => {
+    const asset = {
+      id: "asset",
+      campaign_id: "campaign",
+      template_key: "statement",
+      format: "square",
+      content: {
+        kicker: "What the evidence showed",
+        headline: "Clarity creates momentum.",
+        supportingText: "A useful campaign insight",
+      },
+      brand_snapshot: {
+        name: "Example Company",
+        tagline: "Useful work",
+        primary: "#0b1b3d",
+        secondary: "#f4efe3",
+        accent: "#c9a84c",
+        background: "#f4efe3",
+        foreground: "#0b1b3d",
+        headingFont: "Georgia",
+        bodyFont: "Arial",
+        voiceTone: "Clear and direct",
+      },
+      alt_text: "Example Company graphic: Clarity creates momentum.",
+      status: "draft",
+      public_token: "token",
+      version: 1,
+      approved_at: null,
+      created_at: new Date().toISOString(),
+    } satisfies GrowthAsset;
+    const response = new ImageResponse(renderGrowthAsset(asset), {
+      width: 300,
+      height: 300,
+    });
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    expect([...bytes.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
   });
 });
 
