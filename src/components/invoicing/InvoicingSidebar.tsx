@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 const NAV_GROUPS: { section: string; items: { href: string; label: string; exact?: boolean }[] }[] = [
   {
     section: "Studio",
-    items: [{ href: "/invoicing", label: "Overview", exact: true }],
+    items: [
+      { href: "/invoicing", label: "Overview", exact: true },
+      { href: "/invoicing/growth", label: "Growth OS" },
+    ],
   },
   {
     section: "Social",

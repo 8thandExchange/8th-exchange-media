@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type {
@@ -756,6 +757,15 @@ export function PipelineBoard({
                           ? ` · approved by ${post.approved_by}`
                           : ""}
                       </div>
+                      {post.growth_campaign_id ? (
+                        <Link
+                          href={`/invoicing/growth/campaigns/${post.growth_campaign_id}`}
+                          className="inv-link"
+                          style={{ display: "inline-block", fontSize: "11px", marginTop: "6px" }}
+                        >
+                          View originating campaign →
+                        </Link>
+                      ) : null}
                       {post.status === "rejected" && post.approval_note ? (
                         <div className="inv-alert inv-alert-error" style={{ marginTop: "8px", marginBottom: 0 }}>
                           {post.approved_by}: {post.approval_note}
