@@ -1,9 +1,13 @@
+import crypto from "node:crypto";
 import { getPortalDb } from "@/lib/portal/db";
 import {
   createSocialPost,
   listSocialAccounts,
+  listSocialPosts,
   type GhlAuth,
+  type GhlSocialPost,
 } from "@/lib/ghl";
+import { claimCreativePostPublishable } from "@/lib/production/publishing";
 
 /**
  * The social content pipeline — the SocialPilot-style layer in front of
@@ -21,6 +25,7 @@ export type SocialPostStatus =
   | "pending_approval"
   | "approved"
   | "rejected"
+  | "publishing"
   | "scheduled"
   | "published"
   | "failed"
@@ -65,12 +70,145 @@ export interface SocialPostRow {
   growth_campaign_id: string | null;
   growth_asset_id: string | null;
   growth_content_key: string | null;
+  creative_project_id: string | null;
+  creative_source_revision_id: string | null;
+  creative_approved_hash: string | null;
+  creative_content_key: string | null;
+  approval_content_hash: string | null;
+  publishing_started_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
 function throwIfError(error: { message: string } | null): void {
   if (error) throw new Error(error.message);
+}
+
+function approvalContentHash(
+  post: Pick<
+    SocialPostRow,
+    "summary" | "variants" | "media" | "account_ids" | "schedule_at" | "category"
+  >
+): string {
+  const variants = Object.fromEntries(
+    Object.entries(post.variants ?? {}).sort(([left], [right]) => left.localeCompare(right))
+  );
+  return crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        summary: post.summary,
+        variants,
+        media: post.media,
+        accountIds: [...post.account_ids].sort(),
+        scheduleAt: post.schedule_at,
+        category: post.category,
+      })
+    )
+    .digest("hex");
+}
+
+function deliveryGroupKey(post: SocialPostRow, text: string, accountIds: string[]): string {
+  return crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        approvalHash: post.approval_content_hash,
+        text,
+        accountIds: [...accountIds].sort(),
+        media: post.media,
+        scheduleAt: post.schedule_at,
+      })
+    )
+    .digest("hex");
+}
+
+async function reserveDelivery(
+  post: SocialPostRow,
+  text: string,
+  accountIds: string[]
+): Promise<{
+  groupKey: string;
+  action: "execute" | "skip" | "reconcile";
+  ghlPostId: string | null;
+  leaseToken: string | null;
+  reservedSince: string | null;
+}> {
+  const groupKey = deliveryGroupKey(post, text, accountIds);
+  const { data, error } = await getPortalDb().rpc("reserve_social_delivery", {
+    p_post_id: post.id,
+    p_group_key: groupKey,
+    p_content_hash: post.approval_content_hash ?? approvalContentHash(post),
+    p_account_ids: accountIds,
+  });
+  if (error?.message.includes("DELIVERY_BUSY")) {
+    throw new Error("This post variant is already being handed to Go High Level");
+  }
+  throwIfError(error);
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    groupKey,
+    action:
+      row?.action === "skip"
+        ? "skip"
+        : row?.action === "reconcile"
+          ? "reconcile"
+          : "execute",
+    ghlPostId: row?.existing_ghl_post_id ?? null,
+    leaseToken: row?.delivery_lease_token ?? null,
+    reservedSince: row?.reserved_since ?? null,
+  };
+}
+
+async function completeDelivery(
+  postId: string,
+  groupKey: string,
+  leaseToken: string,
+  status: "succeeded" | "failed",
+  ghlPostId?: string,
+  errorMessage?: string
+): Promise<void> {
+  const { error } = await getPortalDb().rpc("complete_social_delivery", {
+    p_post_id: postId,
+    p_group_key: groupKey,
+    p_lease_token: leaseToken,
+    p_status: status,
+    p_ghl_post_id: ghlPostId ?? null,
+    p_error: errorMessage ?? null,
+  });
+  throwIfError(error);
+}
+
+function matchingGhlPost(
+  posts: GhlSocialPost[],
+  input: {
+    text: string;
+    accountIds: string[];
+    mediaUrls: string[];
+    scheduleAt: string | null;
+    reservedSince: string;
+  }
+): GhlSocialPost | null {
+  const sameSet = (left: string[], right: string[]) =>
+    [...left].sort().join("|") === [...right].sort().join("|");
+  const earliest = new Date(input.reservedSince).getTime() - 2 * 60 * 1000;
+  return (
+    posts.find((post) => {
+      if (post.summary !== input.text || !post.createdAt) return false;
+      if (new Date(post.createdAt).getTime() < earliest) return false;
+      if (post.accountIds && !sameSet(post.accountIds, input.accountIds)) return false;
+      if (
+        !sameSet(
+          (post.media ?? []).map((item) => item.url),
+          input.mediaUrls
+        )
+      ) {
+        return false;
+      }
+      if (input.scheduleAt && post.scheduleDate !== input.scheduleAt) return false;
+      return true;
+    }) ?? null
+  );
 }
 
 /* ── Account registry (synced from GHL) ──────────── */
@@ -147,6 +285,10 @@ export async function createPipelinePost(input: {
   growthCampaignId?: string;
   growthAssetId?: string;
   growthContentKey?: string;
+  creativeProjectId?: string;
+  creativeSourceRevisionId?: string;
+  creativeApprovedHash?: string;
+  creativeContentKey?: string;
 }): Promise<SocialPostRow> {
   const { data, error } = await getPortalDb()
     .from("portal_social_posts")
@@ -163,6 +305,10 @@ export async function createPipelinePost(input: {
       growth_campaign_id: input.growthCampaignId ?? null,
       growth_asset_id: input.growthAssetId ?? null,
       growth_content_key: input.growthContentKey ?? null,
+      creative_project_id: input.creativeProjectId ?? null,
+      creative_source_revision_id: input.creativeSourceRevisionId ?? null,
+      creative_approved_hash: input.creativeApprovedHash ?? null,
+      creative_content_key: input.creativeContentKey ?? null,
     })
     .select("*")
     .single();
@@ -206,6 +352,26 @@ async function updatePost(
   return data!;
 }
 
+async function updatePostIfCurrent(
+  existing: SocialPostRow,
+  allowedStatuses: SocialPostStatus[],
+  patch: Record<string, unknown>
+): Promise<SocialPostRow> {
+  const { data, error } = await getPortalDb()
+    .from("portal_social_posts")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", existing.id)
+    .eq("updated_at", existing.updated_at)
+    .in("status", allowedStatuses)
+    .select("*")
+    .maybeSingle();
+  throwIfError(error);
+  if (!data) {
+    throw new Error("This post changed in another session. Refresh before continuing.");
+  }
+  return data;
+}
+
 export async function editPipelinePost(
   id: string,
   fields: {
@@ -217,6 +383,11 @@ export async function editPipelinePost(
     category?: string | null;
   }
 ): Promise<SocialPostRow> {
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "rejected"].includes(existing.status)) {
+    throw new Error("Approved or published content cannot be edited; create a new draft instead");
+  }
   const patch: Record<string, unknown> = {};
   if (fields.summary !== undefined) patch.summary = fields.summary;
   if (fields.variants !== undefined) patch.variants = fields.variants;
@@ -224,7 +395,10 @@ export async function editPipelinePost(
   if (fields.accountIds !== undefined) patch.account_ids = fields.accountIds;
   if (fields.scheduleAt !== undefined) patch.schedule_at = fields.scheduleAt;
   if (fields.category !== undefined) patch.category = fields.category;
-  return updatePost(id, patch);
+  patch.approval_content_hash = null;
+  patch.approved_by = null;
+  patch.approved_at = null;
+  return updatePostIfCurrent(existing, ["idea", "draft", "rejected"], patch);
 }
 
 /** Client-facing decision on a pending_approval post. */
@@ -234,16 +408,29 @@ export async function decidePipelinePost(
   by: string,
   note?: string
 ): Promise<SocialPostRow> {
-  return updatePost(id, {
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "pending_approval"].includes(existing.status)) {
+    throw new Error("This post is not awaiting an approval decision");
+  }
+  return updatePostIfCurrent(existing, ["idea", "draft", "pending_approval"], {
     status: decision,
     approved_by: by,
     approved_at: new Date().toISOString(),
     approval_note: note ?? null,
+    approval_content_hash: decision === "approved" ? approvalContentHash(existing) : null,
   });
 }
 
 export async function submitForApproval(id: string): Promise<SocialPostRow> {
-  return updatePost(id, { status: "pending_approval" });
+  const existing = await getPipelinePost(id);
+  if (!existing) throw new Error("Unknown post");
+  if (!["idea", "draft", "rejected"].includes(existing.status)) {
+    throw new Error("Only editable drafts can be submitted for approval");
+  }
+  return updatePostIfCurrent(existing, ["idea", "draft", "rejected"], {
+    status: "pending_approval",
+  });
 }
 
 export async function cancelPipelinePost(id: string): Promise<SocialPostRow> {
@@ -264,14 +451,48 @@ export async function pushPipelinePostToGhl(
   id: string,
   auth: GhlAuth
 ): Promise<SocialPostRow> {
-  const post = await getPipelinePost(id);
+  let post = await getPipelinePost(id);
   if (!post) throw new Error("Unknown post");
+  const stalePublishing =
+    post.status === "publishing" &&
+    Boolean(post.publishing_started_at) &&
+    Date.now() - new Date(post.publishing_started_at!).getTime() > 15 * 60 * 1000;
+  if (!["approved", "failed"].includes(post.status) && !stalePublishing) {
+    throw new Error("Only approved posts can be handed to Go High Level");
+  }
+  const currentHash = approvalContentHash(post);
+  if (post.approval_content_hash && post.approval_content_hash !== currentHash) {
+    throw new Error("This post changed after approval; submit the current version for approval again");
+  }
+  if (post.creative_project_id && !post.approval_content_hash) {
+    throw new Error("This production draft needs exact-content approval before publishing");
+  }
   if (post.account_ids.length === 0) {
     throw new Error("Pick at least one social account before publishing");
   }
 
   const { accounts } = await listSocialAccounts(auth);
   const platformOf = new Map(accounts.map((a) => [a.id, a.platform ?? "unknown"]));
+  const platforms = post.account_ids.map(
+    (accountId) => platformOf.get(accountId) ?? "unknown"
+  );
+  if (post.creative_project_id) {
+    post = await claimCreativePostPublishable({
+      post,
+      mediaUrls: post.media.map((item) => item.url),
+      platforms,
+    });
+  } else {
+    post = await updatePostIfCurrent(
+      post,
+      stalePublishing ? ["publishing"] : ["approved", "failed"],
+      {
+        status: "publishing",
+        publishing_started_at: new Date().toISOString(),
+        error: null,
+      }
+    );
+  }
 
   const textGroups = new Map<string, string[]>();
   for (const accountId of post.account_ids) {
@@ -283,35 +504,109 @@ export async function pushPipelinePostToGhl(
   const ghlPostIds: string[] = [];
   try {
     for (const [text, accountIds] of textGroups) {
-      const result = (await createSocialPost(
-        {
-          summary: text,
+      let reservation = await reserveDelivery(post, text, accountIds);
+      if (reservation.action === "reconcile") {
+        if (!reservation.leaseToken || !reservation.reservedSince) {
+          throw new Error("The prior delivery lease is incomplete");
+        }
+        const remotePosts = await listSocialPosts(auth, accountIds);
+        const match = matchingGhlPost(remotePosts, {
+          text,
           accountIds,
-          mediaUrls: post.media.map((m) => m.url),
-          scheduleDate: post.schedule_at ?? undefined,
-          status: post.schedule_at ? "scheduled" : "published",
-        },
-        auth
-      )) as { results?: { post?: { _id?: string } } };
-      const ghlId = result.results?.post?._id;
-      if (ghlId) ghlPostIds.push(ghlId);
+          mediaUrls: post.media.map((item) => item.url),
+          scheduleAt: post.schedule_at,
+          reservedSince: reservation.reservedSince,
+        });
+        if (match) {
+          const ghlId = match._id ?? match.id;
+          await completeDelivery(
+            post.id,
+            reservation.groupKey,
+            reservation.leaseToken,
+            "succeeded",
+            ghlId
+          );
+          if (ghlId) ghlPostIds.push(ghlId);
+          continue;
+        }
+        await completeDelivery(
+          post.id,
+          reservation.groupKey,
+          reservation.leaseToken,
+          "failed",
+          undefined,
+          "No matching GHL post found during stale-delivery reconciliation"
+        );
+        reservation = await reserveDelivery(post, text, accountIds);
+      }
+      if (reservation.action === "skip") {
+        if (reservation.ghlPostId) ghlPostIds.push(reservation.ghlPostId);
+        continue;
+      }
+      if (!reservation.leaseToken) {
+        throw new Error("Could not reserve this GHL delivery variant");
+      }
+      try {
+        const result = (await createSocialPost(
+          {
+            summary: text,
+            accountIds,
+            mediaUrls: post.media.map((m) => m.url),
+            scheduleDate: post.schedule_at ?? undefined,
+            status: post.schedule_at ? "scheduled" : "published",
+          },
+          auth
+        )) as { results?: { post?: { _id?: string } } };
+        const ghlId = result.results?.post?._id;
+        await completeDelivery(
+          post.id,
+          reservation.groupKey,
+          reservation.leaseToken,
+          "succeeded",
+          ghlId
+        );
+        if (ghlId) ghlPostIds.push(ghlId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message.slice(0, 400) : "Unknown delivery error";
+        // A concrete non-2xx response is a definite rejection and can be
+        // retried. Network/parse failures are ambiguous: keep the lease
+        // reserved so the next attempt reconciles against GHL first.
+        if (/^GHL post create failed \(4\d\d\):/.test(message)) {
+          await completeDelivery(
+            post.id,
+            reservation.groupKey,
+            reservation.leaseToken,
+            "failed",
+            undefined,
+            message
+          );
+        }
+        throw error;
+      }
     }
 
-    return updatePost(id, {
+    return updatePostIfCurrent(post, ["publishing"], {
       status: post.schedule_at ? "scheduled" : "published",
       published_at: post.schedule_at ? null : new Date().toISOString(),
       ghl_post_id: ghlPostIds.join(",") || null,
+      publishing_started_at: null,
       error: null,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message.slice(0, 400) : "Unknown error";
-    await updatePost(id, {
-      status: "failed",
-      ghl_post_id: ghlPostIds.join(",") || null,
-      error: ghlPostIds.length
-        ? `Partially published (${ghlPostIds.length} of ${textGroups.size} variants went out) then failed: ${message}`
-        : message,
-    });
+    try {
+      await updatePostIfCurrent(post, ["publishing"], {
+        status: "failed",
+        ghl_post_id: ghlPostIds.join(",") || null,
+        publishing_started_at: null,
+        error: ghlPostIds.length
+          ? `Partially published (${ghlPostIds.length} of ${textGroups.size} variants went out) then failed: ${message}`
+          : message,
+      });
+    } catch (stateError) {
+      console.error("Could not mark stale GHL delivery failed", stateError);
+    }
     throw err;
   }
 }

@@ -29,6 +29,7 @@ const NAV_GROUPS: { section: string; items: { href: string; label: string; exact
     section: "Work",
     items: [
       { href: "/portal/requests", label: "Requests" },
+      { href: "/portal/production", label: "Production" },
       { href: "/portal/brand", label: "Brand Kit" },
     ],
   },

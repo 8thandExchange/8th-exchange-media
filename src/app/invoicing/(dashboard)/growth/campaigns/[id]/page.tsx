@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GrowthCampaignActions } from "@/components/growth/GrowthCampaignActions";
+import { StartProductionButton } from "@/components/production/StartProductionButton";
 import { ASSET_DIMENSIONS } from "@/lib/growth/graphics";
 import { calculateMetricResult } from "@/lib/growth/reporting";
 import { getCampaignBundle } from "@/lib/growth/service";
+import { getCreativeProjectForCampaign } from "@/lib/production/service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function GrowthCampaignDetailPage({
     notFound();
   }
   const { campaign, opportunity, assets, metrics } = bundle;
+  const production = await getCreativeProjectForCampaign(campaign.id).catch(() => null);
 
   return (
     <div>
@@ -151,6 +154,35 @@ export default async function GrowthCampaignDetailPage({
             status={campaign.status}
             metrics={metrics}
           />
+          {production ? (
+            <div className="inv-card" style={{ marginTop: 16 }}>
+              <div className="inv-detail-section">
+                <div className="inv-detail-label">Creative Production</div>
+                <p className="inv-page-subtitle">
+                  Script Lab, shot plan, storyboard, SEO, rights, QA, and client review.
+                </p>
+                <Link
+                  href={`/invoicing/production/${production.id}`}
+                  className="inv-btn inv-btn-secondary"
+                  style={{ marginTop: 12 }}
+                >
+                  Open production package
+                </Link>
+              </div>
+            </div>
+          ) : ["approved", "active", "completed"].includes(campaign.status) ? (
+            <div className="inv-card" style={{ marginTop: 16 }}>
+              <div className="inv-detail-section">
+                <div className="inv-detail-label">Creative Production</div>
+                <p className="inv-page-subtitle">
+                  Build the script, shots, storyboard, SEO brief, copy variants, and QA package.
+                </p>
+                <div style={{ marginTop: 12 }}>
+                  <StartProductionButton campaignId={campaign.id} />
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="inv-card" style={{ marginTop: 16 }}>
             <div className="inv-detail-section">
               <div className="inv-detail-label">Production record</div>

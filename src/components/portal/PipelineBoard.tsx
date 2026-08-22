@@ -40,6 +40,7 @@ const SECTIONS: { title: string; statuses: SocialPostStatus[]; hint?: string }[]
   },
   { title: "Approved — ready to publish", statuses: ["approved"] },
   { title: "Needs changes", statuses: ["rejected"] },
+  { title: "Publishing", statuses: ["publishing"] },
   { title: "Scheduled & published", statuses: ["scheduled", "published"] },
   { title: "Failed", statuses: ["failed"] },
 ];
@@ -766,6 +767,15 @@ export function PipelineBoard({
                           View originating campaign →
                         </Link>
                       ) : null}
+                      {post.creative_project_id ? (
+                        <Link
+                          href={`/invoicing/production/${post.creative_project_id}`}
+                          className="inv-link"
+                          style={{ display: "inline-block", fontSize: "11px", marginTop: "6px", marginLeft: "10px" }}
+                        >
+                          View production package →
+                        </Link>
+                      ) : null}
                       {post.status === "rejected" && post.approval_note ? (
                         <div className="inv-alert inv-alert-error" style={{ marginTop: "8px", marginBottom: 0 }}>
                           {post.approved_by}: {post.approval_note}
@@ -788,7 +798,7 @@ export function PipelineBoard({
                           </button>
                         </>
                       ) : null}
-                      {(post.status === "pending_approval" || post.status === "draft" || post.status === "idea") ? (
+                      {!clientId && (post.status === "pending_approval" || post.status === "draft" || post.status === "idea") ? (
                         <button type="button" className="inv-btn inv-btn-secondary" disabled={busy} onClick={() => postAction(post.id, "approve")}>
                           Approve (staff)
                         </button>
@@ -808,7 +818,7 @@ export function PipelineBoard({
                           {post.status === "failed" ? "Retry" : post.schedule_at ? "Schedule" : "Publish now"}
                         </button>
                       ) : null}
-                      {post.status !== "published" && post.status !== "canceled" ? (
+                      {!["publishing", "published", "canceled"].includes(post.status) ? (
                         <button type="button" className="inv-btn inv-btn-ghost" disabled={busy} onClick={() => postAction(post.id, "cancel")}>
                           Cancel
                         </button>

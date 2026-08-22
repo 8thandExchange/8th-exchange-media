@@ -92,6 +92,25 @@ scores, offers, destinations, account IDs, approvals, and measurements remain
 outside the model's control. Set `APP_BASE_URL` to the production origin so GHL
 can fetch approved PNG graphics.
 
+### Creative Production
+
+Approved Growth OS campaigns can open a versioned production package at
+`/invoicing/production`. The module includes:
+
+- a hook library and timed Script Lab with immutable revisions;
+- script-linked shot plans and storyboard frames;
+- evidence-backed SEO briefs without fabricated volume or ranking data;
+- channel copy, thumbnails, and a repurposing matrix;
+- asset ownership, license, release, territory, and expiration records;
+- deterministic QA, optimistic workflow locking, and exact-hash approvals;
+- client package review at `/portal/production`;
+- approved final masters handed to the Content Pipeline as drafts only.
+
+Apply `supabase/migrations/20260822133000_creative_production_os_v2.sql`.
+The complete system operates deterministically when AI is unavailable. Set
+`PRODUCTION_AI_MODEL` to use a separate Gateway model for bounded spoken-copy
+refinement; it falls back to `GROWTH_AI_MODEL`.
+
 ```bash
 npm test
 npm run lint
