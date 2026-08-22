@@ -1207,3 +1207,345 @@
     flex: 1;
   }
 }
+
+/* Growth OS — evidence, creative and measurement remain on the flat inv-* system. */
+.growth-score-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.growth-score-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.growth-score-card span {
+  color: var(--inv-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.growth-score-card strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.growth-opportunity {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) auto;
+  gap: 20px;
+  padding: 20px;
+  align-items: start;
+}
+
+.growth-opportunity-score {
+  width: 76px;
+  min-height: 76px;
+  border-radius: 8px;
+  background: var(--inv-accent);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.growth-opportunity-score strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.growth-opportunity-score span {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.66;
+}
+
+.growth-opportunity-body h3,
+.growth-client-campaign h2 {
+  margin-top: 9px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.growth-opportunity-body > p,
+.growth-client-campaign-body > p {
+  color: var(--inv-text-secondary);
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+
+.growth-factors {
+  color: var(--inv-text-muted);
+  font-size: 11px;
+}
+
+.growth-recommendation,
+.growth-hypothesis,
+.growth-evidence-block {
+  background: var(--inv-neutral-bg);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 14px 0;
+}
+
+.growth-recommendation > span,
+.growth-hypothesis > span,
+.growth-evidence-block > span {
+  color: var(--inv-text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.growth-recommendation p,
+.growth-hypothesis p,
+.growth-evidence-block p {
+  color: var(--inv-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 5px;
+}
+
+.growth-evidence-block h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.growth-check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.growth-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--inv-border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: var(--inv-text-secondary);
+  font-size: 12px;
+}
+
+.growth-check:has(input:checked) {
+  border-color: var(--inv-accent);
+  background: #f8fafc;
+  color: var(--inv-text);
+}
+
+.growth-number-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.growth-campaign-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.growth-campaign-layout > aside {
+  position: sticky;
+  top: 72px;
+}
+
+.growth-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.growth-asset-card {
+  overflow: hidden;
+  margin: 0;
+}
+
+.growth-asset-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--inv-neutral-bg);
+}
+
+.growth-asset-card figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--inv-border);
+  color: var(--inv-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.growth-post-copy {
+  white-space: pre-wrap;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--inv-text-secondary);
+  margin-top: 12px;
+}
+
+.growth-variants {
+  margin-top: 14px;
+  color: var(--inv-text-secondary);
+  font-size: 12px;
+}
+
+.growth-variants summary {
+  cursor: pointer;
+  color: var(--inv-accent);
+  font-weight: 600;
+}
+
+.growth-variants div {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--inv-border);
+}
+
+.growth-variants p {
+  white-space: pre-wrap;
+  margin-top: 3px;
+}
+
+.growth-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.growth-metric-card {
+  padding: 18px;
+}
+
+.growth-metric-card > span,
+.growth-client-metric > span {
+  color: var(--inv-text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.growth-metric-card > strong,
+.growth-client-metric > strong {
+  display: block;
+  font-size: 22px;
+  margin: 5px 0;
+}
+
+.growth-metric-card p,
+.growth-client-metric small {
+  color: var(--inv-text-muted);
+  font-size: 11px;
+}
+
+.growth-positive {
+  color: var(--inv-success) !important;
+}
+
+.growth-guardrails {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--inv-text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.growth-meta-list {
+  margin: 12px 0 16px;
+}
+
+.growth-meta-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--inv-border);
+  font-size: 12px;
+}
+
+.growth-meta-list dt {
+  color: var(--inv-text-muted);
+}
+
+.growth-meta-list dd {
+  text-align: right;
+  color: var(--inv-text-secondary);
+}
+
+.growth-client-campaign {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.growth-client-campaign > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.growth-client-campaign-body {
+  padding: 24px;
+}
+
+.growth-client-metric {
+  background: var(--inv-neutral-bg);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+@media (max-width: 1000px) {
+  .growth-score-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .growth-campaign-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .growth-campaign-layout > aside {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .growth-score-grid,
+  .growth-asset-grid,
+  .growth-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .growth-opportunity {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .growth-opportunity-score {
+    width: 60px;
+    min-height: 60px;
+  }
+
+  .growth-opportunity-action {
+    grid-column: 2;
+  }
+
+  .growth-client-campaign {
+    grid-template-columns: 1fr;
+  }
+}

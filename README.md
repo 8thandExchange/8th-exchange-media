@@ -67,6 +67,37 @@ out from `onboarding@resend.dev` and tend to land in spam.
 
 Next.js 16 · React 19 · Tailwind CSS 4 · Framer Motion · Lenis · TypeScript
 
+## Growth Operating System
+
+The staff dashboard at `/invoicing/growth` provides an evidence-to-outcome
+workflow:
+
+1. A bounded, SSRF-protected crawler audits a public website and stores page
+   facts rather than raw HTML.
+2. Versioned rules turn evidence into transparent impact/confidence/effort
+   opportunities.
+3. Staff converts an accepted opportunity into a campaign brief, nine branded
+   graphic renditions, channel copy, and a measurable hypothesis.
+4. Campaign approval freezes graphics. Launch creates drafts in the existing
+   social pipeline; it never publishes directly.
+5. Clients see approved campaigns and progress at `/portal/growth`.
+
+Apply `supabase/migrations/20260822105000_growth_os_v1.sql` before using this
+feature. All Growth OS tables have RLS enabled with no browser policies and are
+accessed only through the server-side service-role client.
+
+Campaign generation works without an AI provider. Set `GROWTH_AI_MODEL` to a
+Vercel AI Gateway model identifier to enable bounded copy refinement; evidence,
+scores, offers, destinations, account IDs, approvals, and measurements remain
+outside the model's control. Set `APP_BASE_URL` to the production origin so GHL
+can fetch approved PNG graphics.
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
 ## Deployment
 
 Hosted on Vercel (project `8th-exchange-media`).

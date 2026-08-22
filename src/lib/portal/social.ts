@@ -62,6 +62,9 @@ export interface SocialPostRow {
   approved_by: string | null;
   approved_at: string | null;
   error: string | null;
+  growth_campaign_id: string | null;
+  growth_asset_id: string | null;
+  growth_content_key: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -141,6 +144,9 @@ export async function createPipelinePost(input: {
   scheduleAt?: string;
   category?: string;
   createdBy?: string;
+  growthCampaignId?: string;
+  growthAssetId?: string;
+  growthContentKey?: string;
 }): Promise<SocialPostRow> {
   const { data, error } = await getPortalDb()
     .from("portal_social_posts")
@@ -154,6 +160,9 @@ export async function createPipelinePost(input: {
       schedule_at: input.scheduleAt ?? null,
       category: input.category ?? null,
       created_by: input.createdBy ?? "staff",
+      growth_campaign_id: input.growthCampaignId ?? null,
+      growth_asset_id: input.growthAssetId ?? null,
+      growth_content_key: input.growthContentKey ?? null,
     })
     .select("*")
     .single();

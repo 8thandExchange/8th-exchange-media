@@ -4,7 +4,11 @@ import type { NextRequest } from "next/server";
 const STAFF_SESSION_COOKIE = "8e_invoicing_session";
 const PORTAL_SESSION_COOKIE = "8e_portal_session";
 
-export function middleware(request: NextRequest) {
+/**
+ * Optimistic cookie-presence redirects only. Definitive authorization remains
+ * in every private layout, Server Action, and Route Handler.
+ */
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/invoicing")) {
