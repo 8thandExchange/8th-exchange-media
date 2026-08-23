@@ -65,7 +65,7 @@ export default async function GrowthCampaignDetailPage({
           </section>
 
           <section>
-            <div className="inv-section-heading"><div><h2>Creative system</h2><p>Three locked templates rendered automatically in square, portrait, and story formats.</p></div></div>
+            <div className="inv-section-heading"><div><h2>Creative system</h2><p>Editorial lockups in square, portrait, and story — house type, brand color, no generic templates.</p></div></div>
             <div className="growth-asset-grid">
               {assets.map((asset) => {
                 const size = ASSET_DIMENSIONS[asset.format];

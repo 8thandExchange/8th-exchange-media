@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ImageResponse } from "next/og";
 import { crawlWebsite, isPublicIp, summarizeAudit } from "@/lib/growth/audit";
 import { generateCampaignBrief } from "@/lib/growth/campaign";
+import { assertPublicVoice, breakDisplayLines } from "@/lib/growth/copy";
+import { loadGrowthAssetFonts } from "@/lib/growth/fonts";
 import { renderGrowthAsset } from "@/lib/growth/graphics";
 import { calculateCommercialMetrics, calculateMetricResult } from "@/lib/growth/reporting";
 import { priorityScore, scoreAudit } from "@/lib/growth/scoring";
@@ -154,6 +156,28 @@ describe("campaign generation", () => {
     expect(brief.posts.every((post) => post.variants.facebook)).toBe(true);
     expect(brief.posts[0].variants.facebook).toContain("utm_campaign=growth-opp");
     expect(brief.guardrails.some((rule) => rule.includes("guaranteed"))).toBe(true);
+    expect(brief.posts.every((post) => assertPublicVoice(post.summary))).toBe(true);
+    expect(brief.posts.every((post) => assertPublicVoice(post.graphicHeadline))).toBe(true);
+    expect(brief.posts[0].graphicHeadline.split(/\s+/).length).toBeLessThanOrEqual(8);
+    expect(brief.posts[1].graphicHeadline).toBe("Clarity creates momentum.");
+    expect(brief.posts[2].graphicHeadline).toBe("A practical growth assessment");
+  });
+
+  it("breaks headlines for display instead of wrapping as a paragraph", () => {
+    expect(breakDisplayLines("Make the next step obvious.", 16)).toEqual([
+      "Make the next",
+      "step obvious.",
+    ]);
+  });
+
+  it("loads the house fonts used by rendered graphics", async () => {
+    const fonts = await loadGrowthAssetFonts();
+    expect(fonts.map((font) => [font.name, font.weight])).toEqual([
+      ["Playfair Display", 600],
+      ["Hanken Grotesk", 400],
+      ["Hanken Grotesk", 600],
+    ]);
+    expect(fonts.every((font) => font.data.byteLength > 1000)).toBe(true);
   });
 
   it("renders the generated creative system as PNG", async () => {
@@ -186,12 +210,64 @@ describe("campaign generation", () => {
       approved_at: null,
       created_at: new Date().toISOString(),
     } satisfies GrowthAsset;
-    const response = new ImageResponse(renderGrowthAsset(asset), {
-      width: 300,
-      height: 300,
-    });
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    expect([...bytes.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    const fonts = await loadGrowthAssetFonts();
+    for (const template_key of ["statement", "insight", "offer"] as const) {
+      const response = new ImageResponse(renderGrowthAsset({ ...asset, template_key }), {
+        width: 300,
+        height: 300,
+        fonts,
+      });
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      expect([...bytes.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    }
+  });
+
+  it("renders full-size 8E house lockups for visual review", async () => {
+    const { writeFile, mkdir } = await import("node:fs/promises");
+    const fonts = await loadGrowthAssetFonts();
+    const house = {
+      name: "8th & Exchange Media",
+      tagline: "Make the signal impossible to ignore.",
+      primary: "#0B1B3D",
+      secondary: "#F4EFE3",
+      accent: "#C5A059",
+      background: "#F4EFE3",
+      foreground: "#0B1B3D",
+      headingFont: "Playfair Display",
+      bodyFont: "Hanken Grotesk",
+      voiceTone: "Editorial",
+    };
+    await mkdir("/tmp/growth-samples", { recursive: true });
+    for (const template_key of ["statement", "insight", "offer"] as const) {
+      const response = new ImageResponse(
+        renderGrowthAsset({
+          id: template_key,
+          campaign_id: "campaign",
+          template_key,
+          format: "square",
+          alt_text: "8E review graphic",
+          status: "draft",
+          public_token: "token",
+          version: 1,
+          approved_at: null,
+          created_at: new Date().toISOString(),
+          brand_snapshot: house,
+          content: {
+            kicker: template_key === "offer" ? "The offer" : template_key === "insight" ? "The principle" : "The friction",
+            headline:
+              template_key === "offer"
+                ? "A practical growth assessment"
+                : template_key === "insight"
+                  ? "Clarity creates momentum."
+                  : "Make the next step obvious.",
+            supportingText: template_key === "offer" ? "Book an assessment" : house.tagline,
+            cta: "Book an assessment",
+          },
+        }),
+        { width: 1080, height: 1080, fonts }
+      );
+      await writeFile(`/tmp/growth-samples/${template_key}.png`, Buffer.from(await response.arrayBuffer()));
+    }
   });
 });
 
