@@ -4,7 +4,7 @@ import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
 import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
-import { getBrandKit, getClientById } from "@/lib/portal/service";
+import { getBrandKit, getClientById, isComplianceAnswered } from "@/lib/portal/service";
 import { getStripe } from "@/lib/stripe";
 
 /** Card-on-file check; null when Stripe is unreachable (page still renders). */
@@ -61,11 +61,22 @@ export default async function StaffClientDetailPage({
       </div>
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>
-        <GhlSettingsForm clientId={client.id} connectedLocationId={client.ghl_location_id} />
+        <GhlSettingsForm
+          clientId={client.id}
+          connectedLocationId={client.ghl_location_id}
+          tokenLast4={client.ghl_token_last4}
+          scopes={client.ghl_token_scopes}
+          rotationDue={client.ghl_token_rotation_due}
+        />
       </div>
 
       <div style={{ marginTop: "1rem" }}>
-        <OnboardingChecklist clientId={client.id} initialState={client.onboarding_checklist} />
+        <OnboardingChecklist
+          clientId={client.id}
+          initialState={client.onboarding_checklist}
+          clientType={client.client_type}
+          locked={!isComplianceAnswered(client)}
+        />
       </div>
 
       <div className="inv-card" style={{ marginTop: "1rem" }}>

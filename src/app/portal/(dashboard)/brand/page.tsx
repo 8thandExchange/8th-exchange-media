@@ -35,6 +35,8 @@ export default async function PortalBrandPage() {
     (!kit.tagline &&
       !kit.mission &&
       !kit.voiceTone &&
+      !kit.services?.length &&
+      !kit.primaryConversion &&
       !(kit.colors?.length || kit.logos?.length || kit.assets?.length));
 
   return (
@@ -61,6 +63,33 @@ export default async function PortalBrandPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {kit?.services?.length || kit?.priceAnchor || kit?.turnaround || kit?.primaryConversion ? (
+            <Section title="Offer">
+              {kit.services?.length ? (
+                <ul className="mb-3 space-y-1 text-sm" style={{ color: "var(--inv-text-secondary)" }}>
+                  {kit.services.map((s) => (
+                    <li key={s}>· {s}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {kit.priceAnchor ? (
+                <p className="text-sm">
+                  <span className="font-medium">Price anchor:</span> {kit.priceAnchor}
+                </p>
+              ) : null}
+              {kit.turnaround ? (
+                <p className="mt-2 text-sm">
+                  <span className="font-medium">Turnaround:</span> {kit.turnaround}
+                </p>
+              ) : null}
+              {kit.primaryConversion ? (
+                <p className="mt-2 text-sm">
+                  <span className="font-medium">Primary conversion:</span> {kit.primaryConversion}
+                </p>
+              ) : null}
+            </Section>
+          ) : null}
+
           {kit?.mission || kit?.audience ? (
             <Section title="Positioning">
               {kit.mission ? (

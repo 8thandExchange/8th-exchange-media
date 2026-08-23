@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
 import { listSocialAccounts } from "@/lib/ghl";
-import { getClientById, setClientGhl } from "@/lib/portal/service";
+import { getClientById, setClientGhl, updateClientGhlMeta } from "@/lib/portal/service";
 
 /**
  * Set or clear a client's GHL sub-account connection.
@@ -25,11 +25,29 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       locationId?: string;
       apiToken?: string;
       action?: string;
+      scopes?: string;
+      rotationDue?: string;
     };
+
+    const scopes = body.scopes?.trim().slice(0, 500) || null;
+    const rotationDue = /^\d{4}-\d{2}-\d{2}$/.test(body.rotationDue?.trim() ?? "")
+      ? body.rotationDue!.trim()
+      : null;
 
     if (body.action === "disconnect") {
       await setClientGhl(id, null, null);
       return NextResponse.json({ ok: true, connected: false });
+    }
+
+    if (body.action === "metadata") {
+      if (!client.ghl_location_id) {
+        return NextResponse.json(
+          { error: "Connect a location and token before saving scopes or a rotation date." },
+          { status: 400 }
+        );
+      }
+      await updateClientGhlMeta(id, { scopes, rotationDue });
+      return NextResponse.json({ ok: true, connected: true, scopes, rotationDue });
     }
 
     const locationId = body.locationId?.trim();
@@ -55,8 +73,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       );
     }
 
-    await setClientGhl(id, locationId, apiToken);
-    return NextResponse.json({ ok: true, connected: true });
+    await setClientGhl(id, locationId, apiToken, { scopes, rotationDue });
+    return NextResponse.json({
+      ok: true,
+      connected: true,
+      tokenLast4: apiToken.slice(-4),
+      scopes,
+      rotationDue,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to update GHL connection";
     return NextResponse.json({ error: message }, { status: 500 });

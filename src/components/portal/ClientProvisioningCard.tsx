@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { PortalClient } from "@/lib/portal/service";
+import { CLIENT_TYPES, type ClientType } from "@/lib/portal/checklist";
+import {
+  BAA_STATUSES,
+  ENTITY_TYPES,
+  type BaaStatus,
+  type EntityType,
+  type PortalClient,
+} from "@/lib/portal/service";
 
 /**
  * The one card that holds everything a GHL sub-account setup asks for:
@@ -28,6 +35,20 @@ export function ClientProvisioningCard({
       .map(([k, v]) => `${k}: ${v}`)
       .join("\n")
   );
+  const [clientType, setClientType] = useState<ClientType>(client.client_type ?? "local");
+  const [legalName, setLegalName] = useState(client.legal_name ?? "");
+  const [ein, setEin] = useState(client.ein ?? "");
+  const [entityType, setEntityType] = useState<EntityType | "">(client.entity_type ?? "");
+  const [registeredAgent, setRegisteredAgent] = useState(client.registered_agent ?? "");
+  const [baaStatus, setBaaStatus] = useState<BaaStatus | "">(client.baa_status ?? "");
+  const [phiPermitted, setPhiPermitted] = useState<"" | "true" | "false">(
+    client.phi_permitted === null || client.phi_permitted === undefined
+      ? ""
+      : client.phi_permitted
+        ? "true"
+        : "false"
+  );
+  const [subprocessors, setSubprocessors] = useState((client.subprocessors ?? []).join("\n"));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -77,6 +98,17 @@ export function ClientProvisioningCard({
           website: website.trim() || null,
           address: address.trim() || null,
           socials: parseSocials(socials),
+          clientType,
+          legalName: legalName.trim() || null,
+          ein: ein.trim() || null,
+          entityType: entityType || null,
+          registeredAgent: registeredAgent.trim() || null,
+          baaStatus: baaStatus || null,
+          phiPermitted: phiPermitted === "" ? null : phiPermitted === "true",
+          subprocessors: subprocessors
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean),
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -156,6 +188,112 @@ export function ClientProvisioningCard({
         <div className="inv-field" style={{ gridColumn: "1 / -1" }}>
           <label className="inv-label" htmlFor="pv-socials">Socials (one per line, e.g. instagram: @handle)</label>
           <textarea id="pv-socials" className="inv-textarea" rows={3} value={socials} onChange={(e) => setSocials(e.target.value)} />
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid var(--inv-border)", marginTop: "20px", paddingTop: "18px" }}>
+        <div className="inv-detail-label">Client type</div>
+        <p style={{ fontSize: "13px", color: "var(--inv-text-secondary)", marginBottom: "12px", maxWidth: "62ch" }}>
+          Changes which checklist items render and which are required. Platform brands should not treat Google Business Profile as a ranking asset.
+        </p>
+        <div style={{ display: "grid", gap: "8px" }}>
+          {CLIENT_TYPES.map((opt) => (
+            <label key={opt.value} style={{ display: "grid", gridTemplateColumns: "18px 1fr", gap: 10, alignItems: "start" }}>
+              <input
+                type="radio"
+                name="pv-client-type"
+                checked={clientType === opt.value}
+                onChange={() => setClientType(opt.value)}
+                style={{ marginTop: 3, accentColor: "var(--inv-accent)" }}
+              />
+              <span>
+                <span style={{ fontWeight: 600, fontSize: 13.5 }}>{opt.label}</span>
+                <span style={{ display: "block", fontSize: 12, color: "var(--inv-text-muted)" }}>{opt.help}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid var(--inv-border)", marginTop: "20px", paddingTop: "18px" }}>
+        <div className="inv-detail-label">Legal entity</div>
+        <p style={{ fontSize: "13px", color: "var(--inv-text-secondary)", marginBottom: "12px", maxWidth: "62ch" }}>
+          A2P 10DLC registration will demand all four. Missing this is the item most likely to stall a launch by three weeks.
+        </p>
+        <div className="inv-form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-legal">Legal name</label>
+            <input id="pv-legal" className="inv-input" value={legalName} onChange={(e) => setLegalName(e.target.value)} />
+          </div>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-ein">EIN</label>
+            <input id="pv-ein" className="inv-input" placeholder="XX-XXXXXXX" value={ein} onChange={(e) => setEin(e.target.value)} autoComplete="off" />
+          </div>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-entity">Entity type</label>
+            <select
+              id="pv-entity"
+              className="inv-input"
+              value={entityType}
+              onChange={(e) => setEntityType(e.target.value as EntityType | "")}
+            >
+              <option value="">Select…</option>
+              {ENTITY_TYPES.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-agent">Registered agent</label>
+            <input id="pv-agent" className="inv-input" value={registeredAgent} onChange={(e) => setRegisteredAgent(e.target.value)} />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ borderTop: "1px solid var(--inv-border)", marginTop: "20px", paddingTop: "18px" }}>
+        <div className="inv-detail-label">Compliance</div>
+        <p style={{ fontSize: "13px", color: "var(--inv-text-secondary)", marginBottom: "12px", maxWidth: "62ch" }}>
+          Hard gate. Healthcare and financial clients cannot move the digital-presence checklist until BAA status, PHI-in-CRM, and the subprocessor list are answered.
+        </p>
+        <div className="inv-form-grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-baa">BAA status</label>
+            <select
+              id="pv-baa"
+              className="inv-input"
+              value={baaStatus}
+              onChange={(e) => setBaaStatus(e.target.value as BaaStatus | "")}
+            >
+              <option value="">Unanswered — locks checklist</option>
+              {BAA_STATUSES.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="inv-field">
+            <label className="inv-label" htmlFor="pv-phi">PHI permitted in the CRM</label>
+            <select
+              id="pv-phi"
+              className="inv-input"
+              value={phiPermitted}
+              onChange={(e) => setPhiPermitted(e.target.value as "" | "true" | "false")}
+            >
+              <option value="">Unanswered — locks checklist</option>
+              <option value="false">No — keep PHI out of GHL</option>
+              <option value="true">Yes — only after a BAA is executed</option>
+            </select>
+          </div>
+          <div className="inv-field" style={{ gridColumn: "1 / -1" }}>
+            <label className="inv-label" htmlFor="pv-sub">Subprocessor list (one per line)</label>
+            <textarea
+              id="pv-sub"
+              className="inv-textarea"
+              rows={3}
+              placeholder="Go High Level / LeadConnector&#10;Stripe&#10;Resend"
+              value={subprocessors}
+              onChange={(e) => setSubprocessors(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
