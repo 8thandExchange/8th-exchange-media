@@ -115,6 +115,7 @@ export interface CampaignPostDraft {
   assetTemplate: AssetTemplate;
   graphicHeadline: string;
   graphicKicker: string;
+  graphicSupporting?: string;
   altText: string;
 }
 

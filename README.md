@@ -76,8 +76,9 @@ workflow:
    facts rather than raw HTML.
 2. Versioned rules turn evidence into transparent impact/confidence/effort
    opportunities.
-3. Staff converts an accepted opportunity into a campaign brief, nine branded
-   graphic renditions, channel copy, and a measurable hypothesis.
+3. Staff converts an accepted opportunity into a campaign brief, nine editorial
+   graphics (house type, brand color, designed lockups), channel copy, and a
+   measurable hypothesis. Public copy is written for people, not from audit notes.
 4. Campaign approval freezes graphics. Launch creates drafts in the existing
    social pipeline; it never publishes directly.
 5. Clients see approved campaigns and progress at `/portal/growth`.

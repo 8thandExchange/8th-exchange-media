@@ -229,7 +229,7 @@ export async function createCampaign(input: {
       content: {
         kicker: post.graphicKicker,
         headline: post.graphicHeadline,
-        supportingText: post.angle,
+        supportingText: post.graphicSupporting || post.angle,
         cta: post.key === "offer" ? input.primaryCta : undefined,
       },
       brand_snapshot: brand,

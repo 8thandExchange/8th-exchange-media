@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { isInvoicingAuthenticated } from "@/lib/invoicing/auth";
+import { loadGrowthAssetFonts } from "@/lib/growth/fonts";
 import { ASSET_DIMENSIONS, renderGrowthAsset } from "@/lib/growth/graphics";
 import { getAssetForRender } from "@/lib/growth/service";
 
@@ -23,8 +24,10 @@ export async function GET(
     }
 
     const dimensions = ASSET_DIMENSIONS[asset.format];
+    const fonts = await loadGrowthAssetFonts();
     return new ImageResponse(renderGrowthAsset(asset), {
       ...dimensions,
+      fonts,
       headers: {
         "Cache-Control":
           asset.status === "approved"

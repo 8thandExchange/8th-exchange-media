@@ -17,8 +17,8 @@ import type {
   ThumbnailBriefContent,
 } from "@/lib/production/types";
 
-export const CREATIVE_RECIPE_VERSION = "2026-08-v2";
-export const CREATIVE_QA_VERSION = "2026-08-v2";
+export const CREATIVE_RECIPE_VERSION = "2026-08-v3";
+export const CREATIVE_QA_VERSION = "2026-08-v3";
 
 function sortValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortValue);
@@ -45,6 +45,16 @@ function compact(value: string, limit: number): string {
   if (cleaned.length <= limit) return cleaned;
   const slice = cleaned.slice(0, limit - 1);
   return `${slice.slice(0, slice.lastIndexOf(" ") || slice.length)}…`;
+}
+
+function publicLine(value: string): string {
+  return compact(
+    value
+      .replace(/\b(we found|the evidence showed|documented|rule_key)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim(),
+    160
+  );
 }
 
 function slugify(value: string): string {
@@ -120,46 +130,55 @@ export function generateCreativePackage(input: CreativePackageInput): GeneratedA
       {
         id: "hook-problem",
         framework: "problem",
-        spokenText: compact(`If ${campaign.audience} cannot see the next step, attention disappears before trust has a chance to form.`, 180),
-        onScreenText: compact(opportunity?.title ?? "The hidden gap costing attention", 70),
+        spokenText: compact(
+          `If ${campaign.audience} cannot see the next step, they are already gone.`,
+          180
+        ),
+        onScreenText: "If the next step is unclear, they leave.",
         intendedEmotion: "recognition",
-        estimatedSeconds: 5,
+        estimatedSeconds: 4,
         selected: true,
       },
       {
         id: "hook-question",
         framework: "question",
-        spokenText: compact(`What would change if ${campaign.audience} immediately understood why ${campaign.offer} matters?`, 180),
-        onScreenText: "What if the value was instantly clear?",
+        spokenText: compact(
+          `What would change if ${campaign.audience} understood ${campaign.offer} in a single look?`,
+          180
+        ),
+        onScreenText: "What if the value was obvious?",
         intendedEmotion: "curiosity",
-        estimatedSeconds: 5,
+        estimatedSeconds: 4,
         selected: false,
       },
       {
         id: "hook-contrarian",
         framework: "contrarian",
-        spokenText: "More content is not always the answer. A clearer decision path usually matters first.",
-        onScreenText: "More content is not the answer.",
+        spokenText: "More content is not the work. A cleaner decision is.",
+        onScreenText: "More content is not the work.",
         intendedEmotion: "surprise",
-        estimatedSeconds: 5,
+        estimatedSeconds: 4,
         selected: false,
       },
       {
         id: "hook-proof",
         framework: "proof",
-        spokenText: compact(`The evidence on the page showed one actionable issue: ${campaign.brief.evidence.finding}`, 190),
-        onScreenText: "We followed the evidence.",
+        spokenText: compact(
+          `We are not guessing. One page condition is getting in the way: ${publicLine(campaign.brief.evidence.finding)}`,
+          190
+        ),
+        onScreenText: "One condition. One fix.",
         intendedEmotion: "confidence",
-        estimatedSeconds: 6,
+        estimatedSeconds: 5,
         selected: false,
       },
       {
         id: "hook-demonstration",
         framework: "demonstration",
-        spokenText: `Here is how we turn one documented growth gap into a clear campaign for ${campaign.audience}.`,
-        onScreenText: "From evidence to campaign",
+        spokenText: `Here is the path we want ${campaign.audience} to take — without the extra thinking.`,
+        onScreenText: "Show the path.",
         intendedEmotion: "interest",
-        estimatedSeconds: 5,
+        estimatedSeconds: 4,
         selected: false,
       },
     ],
@@ -172,35 +191,38 @@ export function generateCreativePackage(input: CreativePackageInput): GeneratedA
       role: "hook" as const,
       spokenCopy: selectedHook.spokenText,
       onScreenCopy: selectedHook.onScreenText,
-      visualIntent: "Direct-to-camera opening with immediate motion and a clean text lockup.",
+      visualIntent: "Direct-to-camera, then a quiet lockup. No stock smile. No kinetic junk.",
     },
     {
       id: "beat-problem",
       role: "problem" as const,
-      spokenCopy: compact(campaign.brief.evidence.finding, 230),
-      onScreenCopy: compact(opportunity?.title ?? "The documented growth gap", 72),
-      visualIntent: "Show the real customer experience or page condition behind the finding.",
+      spokenCopy: compact(
+        `${campaign.audience} should not have to hunt. ${publicLine(campaign.brief.evidence.finding)}.`,
+        230
+      ),
+      onScreenCopy: "The path is working too hard.",
+      visualIntent: "Show the real moment of hesitation — the page, the lobby, the phone — not a recreation of 'confusion'.",
     },
     {
       id: "beat-proof",
       role: "proof" as const,
-      spokenCopy: `The recommendation is specific: ${compact(opportunity?.recommended_action ?? campaign.brief.messageHierarchy[2] ?? campaign.objective, 230)}`,
-      onScreenCopy: "A specific intervention",
-      visualIntent: "Screen capture, annotated evidence, or a real demonstration. Do not stage unsupported results.",
+      spokenCopy: `The fix is specific: ${compact(opportunity?.recommended_action ?? campaign.brief.messageHierarchy[2] ?? campaign.objective, 210)}`,
+      onScreenCopy: "One specific fix.",
+      visualIntent: "Screen capture or a real demonstration. Annotate lightly. Do not stage results.",
     },
     {
       id: "beat-solution",
       role: "solution" as const,
-      spokenCopy: `${campaign.offer} gives ${campaign.audience} a practical path toward ${campaign.objective.toLowerCase()}.`,
+      spokenCopy: `${campaign.offer} gives ${campaign.audience} a practical path to ${campaign.objective.toLowerCase()}.`,
       onScreenCopy: compact(campaign.offer, 70),
-      visualIntent: "Show the people, process, and tangible work behind the offer.",
+      visualIntent: "The people and the work. Hands, tools, rooms that actually exist.",
     },
     {
       id: "beat-cta",
       role: "cta" as const,
-      spokenCopy: `${campaign.primary_cta}. The next step is available now.`,
+      spokenCopy: `${campaign.primary_cta}. That is the next step.`,
       onScreenCopy: campaign.primary_cta,
-      visualIntent: "Hold a clean end card long enough to read the action and destination.",
+      visualIntent: "Hold a finished end card long enough to read. Logo small. Type large. No extra words.",
     },
   ];
   const naturalDuration = rawBeats.reduce((sum, beat) => sum + secondsFor(beat.spokenCopy), 0);
@@ -334,7 +356,7 @@ export function generateCreativePackage(input: CreativePackageInput): GeneratedA
   };
 
   const thumbnail: ThumbnailBriefContent = {
-    headline: compact(opportunity?.title ?? campaign.offer, 62),
+    headline: compact(campaign.brief.posts[1]?.graphicHeadline ?? campaign.offer, 62),
     visualFocus: "One expressive human or tangible proof point—not a generic collage.",
     composition: "Subject on one third, high-contrast headline on the open side, logo subordinate.",
     contrastPlan: "Use the frozen brand palette with WCAG-readable headline contrast.",
