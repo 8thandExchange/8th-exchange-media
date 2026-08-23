@@ -9,7 +9,7 @@ import {
   type BaaStatus,
   type EntityType,
   type PortalClient,
-} from "@/lib/portal/service";
+} from "@/lib/portal/types";
 
 /**
  * The one card that holds everything a GHL sub-account setup asks for:

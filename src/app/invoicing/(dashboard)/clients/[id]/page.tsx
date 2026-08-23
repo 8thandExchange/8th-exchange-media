@@ -4,7 +4,8 @@ import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
 import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
-import { getBrandKit, getClientById, isComplianceAnswered } from "@/lib/portal/service";
+import { getBrandKit, getClientById } from "@/lib/portal/service";
+import { isComplianceAnswered } from "@/lib/portal/types";
 import { getStripe } from "@/lib/stripe";
 
 /** Card-on-file check; null when Stripe is unreachable (page still renders). */

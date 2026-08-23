@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { BrandColor, BrandKit, BrandLink } from "@/lib/portal/service";
+import type { BrandColor, BrandKit, BrandLink } from "@/lib/portal/types";
 
 interface BrandKitEditorProps {
   clientId: string;

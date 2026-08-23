@@ -8,7 +8,7 @@ import {
   type ClientType,
 } from "@/lib/portal/checklist";
 import { decryptSecret, encryptSecret, isEncryptedSecret, maskSecret } from "@/lib/portal/crypto";
-import { isComplianceAnswered } from "@/lib/portal/service";
+import { isComplianceAnswered } from "@/lib/portal/types";
 
 describe("client type", () => {
   it("accepts the three modes and rejects anything else", () => {

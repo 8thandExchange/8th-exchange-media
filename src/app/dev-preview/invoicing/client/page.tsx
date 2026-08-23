@@ -4,7 +4,7 @@ import { BrandKitEditor } from "@/components/portal/BrandKitEditor";
 import { ClientProvisioningCard } from "@/components/portal/ClientProvisioningCard";
 import { GhlSettingsForm } from "@/components/portal/GhlSettingsForm";
 import { OnboardingChecklist } from "@/components/portal/OnboardingChecklist";
-import type { BrandKit, PortalClient } from "@/lib/portal/service";
+import type { BrandKit, PortalClient } from "@/lib/portal/types";
 import "../../../invoicing/invoicing.css";
 
 const inter = Inter({
