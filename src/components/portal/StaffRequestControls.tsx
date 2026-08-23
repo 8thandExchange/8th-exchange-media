@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { REQUEST_STATUSES, type RequestStatus } from "@/lib/portal/service";
+import { REQUEST_STATUSES, type RequestStatus } from "@/lib/portal/types";
 
 interface StaffRequestControlsProps {
   requestId: string;

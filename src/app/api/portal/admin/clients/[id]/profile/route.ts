@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireInvoicingAuth } from "@/lib/invoicing/auth";
-import { getClientById, updateClientProfile } from "@/lib/portal/service";
+import { isValidClientType } from "@/lib/portal/checklist";
+import {
+  BAA_STATUSES,
+  ENTITY_TYPES,
+  getClientById,
+  updateClientProfile,
+  type BaaStatus,
+  type EntityType,
+} from "@/lib/portal/service";
 
 const MAX = 200;
+const VALID_ENTITY = new Set(ENTITY_TYPES.map((e) => e.value));
+const VALID_BAA = new Set(BAA_STATUSES.map((e) => e.value));
 
 function clean(v: unknown, max = MAX): string | null | undefined {
   if (v === null) return null;
@@ -34,6 +44,42 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
     }
 
+    let subprocessors: string[] | undefined;
+    if (Array.isArray(body.subprocessors)) {
+      subprocessors = body.subprocessors
+        .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+        .slice(0, 40)
+        .map((v) => v.trim().slice(0, 200));
+    } else if (typeof body.subprocessors === "string") {
+      subprocessors = body.subprocessors
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .slice(0, 40);
+    }
+
+    const clientType = isValidClientType(body.clientType) ? body.clientType : undefined;
+    const entityTypeRaw = clean(body.entityType, 40);
+    const entityType =
+      entityTypeRaw && VALID_ENTITY.has(entityTypeRaw as EntityType)
+        ? (entityTypeRaw as EntityType)
+        : entityTypeRaw === null
+          ? null
+          : undefined;
+    const baaRaw = clean(body.baaStatus, 40);
+    const baaStatus =
+      baaRaw && VALID_BAA.has(baaRaw as BaaStatus)
+        ? (baaRaw as BaaStatus)
+        : baaRaw === null
+          ? null
+          : undefined;
+
+    let phiPermitted: boolean | null | undefined;
+    if (body.phiPermitted === null) phiPermitted = null;
+    else if (typeof body.phiPermitted === "boolean") phiPermitted = body.phiPermitted;
+    else if (body.phiPermitted === "true") phiPermitted = true;
+    else if (body.phiPermitted === "false") phiPermitted = false;
+
     await updateClientProfile(id, {
       phone: clean(body.phone, 30),
       website: clean(body.website),
@@ -41,6 +87,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       company: clean(body.company, 120) ?? undefined,
       contactName: clean(body.contactName, 120) ?? undefined,
       socials,
+      clientType,
+      legalName: clean(body.legalName, 200),
+      ein: clean(body.ein, 20),
+      entityType,
+      registeredAgent: clean(body.registeredAgent, 200),
+      baaStatus,
+      subprocessors,
+      phiPermitted,
     });
 
     return NextResponse.json({ ok: true });

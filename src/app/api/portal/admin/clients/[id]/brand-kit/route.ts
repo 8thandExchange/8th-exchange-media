@@ -81,6 +81,10 @@ function sanitizeKit(body: Record<string, unknown>): BrandKit {
     keywords: strList(body.keywords),
     competitors: strList(body.competitors),
     notes: str(body.notes, MAX_LONG),
+    services: strList(body.services),
+    priceAnchor: str(body.priceAnchor, MAX_LONG),
+    turnaround: str(body.turnaround, MAX_SHORT),
+    primaryConversion: str(body.primaryConversion, MAX_LONG),
   };
   return Object.fromEntries(Object.entries(kit).filter(([, v]) => v !== undefined)) as BrandKit;
 }

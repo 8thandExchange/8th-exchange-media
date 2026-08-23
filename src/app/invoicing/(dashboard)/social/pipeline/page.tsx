@@ -47,6 +47,9 @@ export default async function PipelinePage({
 
   const voiceLines = [
     brandKit?.voiceTone ? `Voice: ${brandKit.voiceTone}` : null,
+    brandKit?.services?.length ? `Services: ${brandKit.services.join(" · ")}` : null,
+    brandKit?.priceAnchor ? `Price: ${brandKit.priceAnchor}` : null,
+    brandKit?.primaryConversion ? `Convert: ${brandKit.primaryConversion}` : null,
     brandKit?.voiceDos?.length ? `Do: ${brandKit.voiceDos.join(" · ")}` : null,
     brandKit?.voiceDonts?.length ? `Don't: ${brandKit.voiceDonts.join(" · ")}` : null,
   ].filter((line): line is string => Boolean(line));

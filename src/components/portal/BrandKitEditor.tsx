@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { BrandColor, BrandKit, BrandLink } from "@/lib/portal/service";
+import type { BrandColor, BrandKit, BrandLink } from "@/lib/portal/types";
 
 interface BrandKitEditorProps {
   clientId: string;
@@ -38,6 +38,10 @@ export function BrandKitEditor({ clientId, initialKit }: BrandKitEditorProps) {
   const [keywords, setKeywords] = useState(listToLines(initialKit.keywords));
   const [competitors, setCompetitors] = useState(listToLines(initialKit.competitors));
   const [notes, setNotes] = useState(initialKit.notes ?? "");
+  const [services, setServices] = useState(listToLines(initialKit.services));
+  const [priceAnchor, setPriceAnchor] = useState(initialKit.priceAnchor ?? "");
+  const [turnaround, setTurnaround] = useState(initialKit.turnaround ?? "");
+  const [primaryConversion, setPrimaryConversion] = useState(initialKit.primaryConversion ?? "");
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -68,6 +72,10 @@ export function BrandKitEditor({ clientId, initialKit }: BrandKitEditorProps) {
           keywords: linesToList(keywords),
           competitors: linesToList(competitors),
           notes,
+          services: linesToList(services),
+          priceAnchor,
+          turnaround,
+          primaryConversion,
         }),
       });
       const data = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -131,6 +139,64 @@ export function BrandKitEditor({ clientId, initialKit }: BrandKitEditorProps) {
           rows={2}
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
+        />
+      </div>
+
+      <div className="inv-detail-label" style={{ marginTop: "1rem" }}>
+        Offer
+      </div>
+      <p className="inv-page-subtitle" style={{ margin: "0 0 12px" }}>
+        These four fields unblock copy. Without them the kit is voice and color with nothing to sell.
+      </p>
+      <div className="inv-field">
+        <label className="inv-label" htmlFor="bk-services">
+          Services (one per line)
+        </label>
+        <textarea
+          id="bk-services"
+          className="inv-textarea"
+          rows={4}
+          placeholder="Independent medical opinions&#10;Nexus letters&#10;DBQs"
+          value={services}
+          onChange={(e) => setServices(e.target.value)}
+        />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div className="inv-field">
+          <label className="inv-label" htmlFor="bk-price">
+            Price anchor
+          </label>
+          <input
+            id="bk-price"
+            className="inv-input"
+            placeholder="e.g. above Xterra, below Telemedica — sell the signature"
+            value={priceAnchor}
+            onChange={(e) => setPriceAnchor(e.target.value)}
+          />
+        </div>
+        <div className="inv-field">
+          <label className="inv-label" htmlFor="bk-turnaround">
+            Turnaround
+          </label>
+          <input
+            id="bk-turnaround"
+            className="inv-input"
+            placeholder="e.g. 7–10 business days after a complete file"
+            value={turnaround}
+            onChange={(e) => setTurnaround(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="inv-field">
+        <label className="inv-label" htmlFor="bk-conversion">
+          Primary conversion action
+        </label>
+        <input
+          id="bk-conversion"
+          className="inv-input"
+          placeholder="e.g. Attorney / claims-agent request for an IMO"
+          value={primaryConversion}
+          onChange={(e) => setPrimaryConversion(e.target.value)}
         />
       </div>
 

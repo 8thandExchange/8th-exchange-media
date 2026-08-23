@@ -1,42 +1,35 @@
 import { getPortalDb } from "@/lib/portal/db";
-import type { ChecklistState } from "@/lib/portal/checklist";
+import {
+  isValidClientType,
+  type ChecklistState,
+  type ClientType,
+} from "@/lib/portal/checklist";
+import { decryptSecret, encryptSecret, isEncryptedSecret, secretLast4 } from "@/lib/portal/crypto";
+import type {
+  BaaStatus,
+  BrandKit,
+  EntityType,
+  PortalClient,
+  RequestPriority,
+  RequestStatus,
+  UpdateAuthor,
+} from "@/lib/portal/types";
 
-export type RequestStatus = "new" | "in_progress" | "in_review" | "delivered" | "closed";
-export type RequestPriority = "standard" | "rush";
-export type UpdateAuthor = "client" | "staff" | "system";
+export type {
+  BaaStatus,
+  BrandColor,
+  BrandKit,
+  BrandLink,
+  EntityType,
+  PortalClient,
+  RequestPriority,
+  RequestStatus,
+  UpdateAuthor,
+} from "@/lib/portal/types";
+export { BAA_STATUSES, ENTITY_TYPES, REQUEST_STATUSES, isComplianceAnswered, statusLabel } from "@/lib/portal/types";
 
-export const REQUEST_STATUSES: { value: RequestStatus; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "in_progress", label: "In progress" },
-  { value: "in_review", label: "In review" },
-  { value: "delivered", label: "Delivered" },
-  { value: "closed", label: "Closed" },
-];
-
-export function statusLabel(status: RequestStatus): string {
-  return REQUEST_STATUSES.find((s) => s.value === status)?.label ?? status;
-}
-
-export interface PortalClient {
-  id: string;
-  company: string;
-  contact_name: string;
-  email: string;
-  active: boolean;
-  brand_notes: string | null;
-  /** GHL sub-account (location) id; null until the client is connected. */
-  ghl_location_id: string | null;
-  /* Provisioning profile — what a GHL sub-account setup asks for. */
-  phone: string | null;
-  website: string | null;
-  address: string | null;
-  socials: Record<string, string>;
-  /** Stripe holds the actual payment method; we store only the reference. */
-  stripe_customer_id: string | null;
-  /** Digital-presence checklist progress; canonical items in lib/portal/checklist. */
-  onboarding_checklist: ChecklistState;
-  created_at: string;
-}
+const CLIENT_COLUMNS =
+  "id, company, contact_name, email, active, brand_notes, ghl_location_id, ghl_token_last4, ghl_token_scopes, ghl_token_rotation_due, phone, website, address, socials, stripe_customer_id, onboarding_checklist, client_type, legal_name, ein, entity_type, registered_agent, baa_status, subprocessors, phi_permitted, compliance_answered_at, created_at";
 
 export interface PortalRequest {
   id: string;
@@ -73,33 +66,47 @@ function throwIfError(error: { message: string } | null): void {
 
 /* ── Clients ─────────────────────────────────────── */
 
+function normalizeClient(row: PortalClient | null): PortalClient | null {
+  if (!row) return null;
+  return {
+    ...row,
+    client_type: isValidClientType(row.client_type) ? row.client_type : "local",
+    socials: row.socials ?? {},
+    onboarding_checklist: row.onboarding_checklist ?? {},
+    subprocessors: row.subprocessors ?? [],
+    ghl_token_last4: row.ghl_token_last4 ?? null,
+    ghl_token_scopes: row.ghl_token_scopes ?? null,
+    ghl_token_rotation_due: row.ghl_token_rotation_due ?? null,
+  };
+}
+
 export async function getClientByEmail(email: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("*")
+    .select(CLIENT_COLUMNS)
     .eq("email", email.trim().toLowerCase())
     .maybeSingle();
   throwIfError(error);
-  return data;
+  return normalizeClient(data);
 }
 
 export async function getClientById(id: string): Promise<PortalClient | null> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
+    .select(CLIENT_COLUMNS)
     .eq("id", id)
     .maybeSingle();
   throwIfError(error);
-  return data;
+  return normalizeClient(data);
 }
 
 export async function listClients(): Promise<PortalClient[]> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
+    .select(CLIENT_COLUMNS)
     .order("company");
   throwIfError(error);
-  return data ?? [];
+  return (data ?? []).map((row) => normalizeClient(row)!);
 }
 
 export async function createPortalClient(input: {
@@ -110,6 +117,7 @@ export async function createPortalClient(input: {
   phone?: string | null;
   website?: string | null;
   socials?: Record<string, string>;
+  clientType?: ClientType;
 }): Promise<PortalClient> {
   const { data, error } = await getPortalDb()
     .from("portal_clients")
@@ -121,11 +129,12 @@ export async function createPortalClient(input: {
       phone: input.phone ?? null,
       website: input.website ?? null,
       socials: input.socials ?? {},
+      client_type: input.clientType ?? "local",
     })
-    .select("id, company, contact_name, email, active, brand_notes, ghl_location_id, phone, website, address, socials, stripe_customer_id, onboarding_checklist, created_at")
+    .select(CLIENT_COLUMNS)
     .single();
   throwIfError(error);
-  return data!;
+  return normalizeClient(data)!;
 }
 
 export async function updateClientProfile(
@@ -137,6 +146,14 @@ export async function updateClientProfile(
     socials?: Record<string, string>;
     contactName?: string;
     company?: string;
+    clientType?: ClientType;
+    legalName?: string | null;
+    ein?: string | null;
+    entityType?: EntityType | null;
+    registeredAgent?: string | null;
+    baaStatus?: BaaStatus | null;
+    subprocessors?: string[];
+    phiPermitted?: boolean | null;
   }
 ): Promise<void> {
   const update: Record<string, unknown> = {};
@@ -146,6 +163,22 @@ export async function updateClientProfile(
   if (fields.socials !== undefined) update.socials = fields.socials;
   if (fields.contactName !== undefined) update.contact_name = fields.contactName;
   if (fields.company !== undefined) update.company = fields.company;
+  if (fields.clientType !== undefined) update.client_type = fields.clientType;
+  if (fields.legalName !== undefined) update.legal_name = fields.legalName;
+  if (fields.ein !== undefined) update.ein = fields.ein;
+  if (fields.entityType !== undefined) update.entity_type = fields.entityType;
+  if (fields.registeredAgent !== undefined) update.registered_agent = fields.registeredAgent;
+  if (fields.baaStatus !== undefined) update.baa_status = fields.baaStatus;
+  if (fields.subprocessors !== undefined) update.subprocessors = fields.subprocessors;
+  if (fields.phiPermitted !== undefined) update.phi_permitted = fields.phiPermitted;
+  if (
+    fields.baaStatus !== undefined ||
+    fields.phiPermitted !== undefined ||
+    fields.subprocessors !== undefined
+  ) {
+    const answered = fields.baaStatus != null && fields.phiPermitted != null;
+    update.compliance_answered_at = answered ? new Date().toISOString() : null;
+  }
   if (Object.keys(update).length === 0) return;
   const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
   throwIfError(error);
@@ -163,7 +196,11 @@ export async function updateClientChecklist(
     .eq("id", clientId)
     .maybeSingle();
   throwIfError(error);
-  const merged = { ...((data?.onboarding_checklist as ChecklistState) ?? {}), ...entries };
+  const current = (data?.onboarding_checklist as ChecklistState) ?? {};
+  const merged: ChecklistState = { ...current };
+  for (const [key, entry] of Object.entries(entries)) {
+    merged[key] = { ...current[key], ...entry };
+  }
   const { error: updateError } = await db
     .from("portal_clients")
     .update({ onboarding_checklist: merged })
@@ -196,19 +233,54 @@ export async function getClientGhlAuth(
     .maybeSingle();
   throwIfError(error);
   if (!data?.ghl_location_id || !data.ghl_api_token) return null;
-  return { token: data.ghl_api_token, locationId: data.ghl_location_id };
+  const token = decryptSecret(data.ghl_api_token);
+  if (!isEncryptedSecret(data.ghl_api_token)) {
+    const { error: migrateError } = await getPortalDb()
+      .from("portal_clients")
+      .update({
+        ghl_api_token: encryptSecret(token),
+        ghl_token_last4: secretLast4(token),
+      })
+      .eq("id", clientId);
+    if (migrateError) {
+      console.error("Could not encrypt stored GHL token for", clientId, migrateError.message);
+    }
+  }
+  return { token, locationId: data.ghl_location_id };
 }
 
-/** Set or clear (both null) a client's GHL sub-account credentials. */
+/** Set or clear (both null) a client's GHL sub-account credentials. Token is encrypted at rest. */
 export async function setClientGhl(
   clientId: string,
   locationId: string | null,
-  apiToken: string | null
+  apiToken: string | null,
+  extras?: { scopes?: string | null; rotationDue?: string | null }
 ): Promise<void> {
-  const { error } = await getPortalDb()
-    .from("portal_clients")
-    .update({ ghl_location_id: locationId, ghl_api_token: apiToken })
-    .eq("id", clientId);
+  const update: Record<string, unknown> = {
+    ghl_location_id: locationId,
+    ghl_api_token: apiToken ? encryptSecret(apiToken) : null,
+    ghl_token_last4: apiToken ? secretLast4(apiToken) : null,
+  };
+  if (extras?.scopes !== undefined) update.ghl_token_scopes = extras.scopes;
+  if (extras?.rotationDue !== undefined) update.ghl_token_rotation_due = extras.rotationDue;
+  if (!apiToken) {
+    update.ghl_token_scopes = null;
+    update.ghl_token_rotation_due = null;
+  }
+  const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
+  throwIfError(error);
+}
+
+/** Update PIT scopes / rotation without rotating the token. */
+export async function updateClientGhlMeta(
+  clientId: string,
+  extras: { scopes?: string | null; rotationDue?: string | null }
+): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (extras.scopes !== undefined) update.ghl_token_scopes = extras.scopes;
+  if (extras.rotationDue !== undefined) update.ghl_token_rotation_due = extras.rotationDue;
+  if (Object.keys(update).length === 0) return;
+  const { error } = await getPortalDb().from("portal_clients").update(update).eq("id", clientId);
   throwIfError(error);
 }
 
@@ -417,41 +489,6 @@ export async function updateLead(
 }
 
 /* ── Brand kits ──────────────────────────────────── */
-
-export interface BrandColor {
-  name: string;
-  hex: string;
-  usage?: string;
-}
-
-export interface BrandLink {
-  label: string;
-  url: string;
-}
-
-/**
- * Machine-readable brand system for a client. Every field is optional so
- * kits can grow over time; consumers (AI tools, templates, integrations)
- * should treat missing fields as "not yet defined".
- */
-export interface BrandKit {
-  tagline?: string;
-  mission?: string;
-  audience?: string;
-  voiceTone?: string;
-  voiceDos?: string[];
-  voiceDonts?: string[];
-  colors?: BrandColor[];
-  headingFont?: string;
-  bodyFont?: string;
-  typographyNotes?: string;
-  logos?: BrandLink[];
-  assets?: BrandLink[];
-  socials?: Record<string, string>;
-  keywords?: string[];
-  competitors?: string[];
-  notes?: string;
-}
 
 export async function getBrandKit(clientId: string): Promise<BrandKit | null> {
   const { data, error } = await getPortalDb()

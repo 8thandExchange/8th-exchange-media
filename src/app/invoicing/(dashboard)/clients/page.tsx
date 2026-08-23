@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { NewClientForm } from "@/components/portal/NewClientForm";
-import { CHECKLIST_TOTAL, checklistProgress } from "@/lib/portal/checklist";
+import { checklistProgress } from "@/lib/portal/checklist";
 import { listClients } from "@/lib/portal/service";
 
 export default async function StaffClientsPage() {
@@ -27,13 +27,14 @@ export default async function StaffClientsPage() {
                 <th>Company</th>
                 <th>Contact</th>
                 <th>Email</th>
+                <th>Type</th>
                 <th>GHL</th>
                 <th>Checklist</th>
               </tr>
             </thead>
             <tbody>
               {clients.map((c) => {
-                const done = checklistProgress(c.onboarding_checklist ?? {});
+                const progress = checklistProgress(c.onboarding_checklist ?? {}, c.client_type ?? "local");
                 return (
                   <tr key={c.id}>
                     <td>
@@ -43,14 +44,15 @@ export default async function StaffClientsPage() {
                     </td>
                     <td>{c.contact_name}</td>
                     <td>{c.email}</td>
+                    <td style={{ textTransform: "capitalize" }}>{c.client_type ?? "local"}</td>
                     <td>
                       <span className={`inv-badge ${c.ghl_location_id ? "inv-badge-paid" : "inv-badge-open"}`}>
                         {c.ghl_location_id ? "Connected" : "Not connected"}
                       </span>
                     </td>
                     <td>
-                      <span className={`inv-badge ${done === CHECKLIST_TOTAL ? "inv-badge-paid" : "inv-badge-open"}`}>
-                        {done}/{CHECKLIST_TOTAL}
+                      <span className={`inv-badge ${progress.percent === 100 ? "inv-badge-paid" : "inv-badge-open"}`}>
+                        {progress.requiredDone}/{progress.requiredTotal} req · {progress.percent}%
                       </span>
                     </td>
                   </tr>

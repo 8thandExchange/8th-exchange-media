@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { statusLabel, type RequestStatus } from "@/lib/portal/service";
+import { statusLabel, type RequestStatus } from "@/lib/portal/types";
 
 const TONES: Record<RequestStatus, string> = {
   new: "inv-badge-open",
